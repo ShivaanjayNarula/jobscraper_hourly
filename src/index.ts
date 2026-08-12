@@ -184,7 +184,9 @@ async function main(): Promise<void> {
     console.log(`${staleForEmail.length} matches are 21+ days old — shown as backlog, not urgent`);
   }
 
-  if (deduped.length > 0 && !dryRun && !coldStart) {
+  const emailCount = coldStart && !testEmail ? 0 : deduped.length;
+
+  if (emailCount > 0 && !dryRun) {
     await writeFile('out/email.html', renderEmail(freshForEmail, staleForEmail), 'utf8');
   }
 
@@ -192,7 +194,7 @@ async function main(): Promise<void> {
   if (output) {
     await appendFile(
       output,
-      `new_count=${deduped.length}\nsubject=${subject(freshForEmail, staleForEmail)}\nhour=${new Date().getUTCHours()}\n`,
+      `new_count=${emailCount}\nsubject=${subject(freshForEmail, staleForEmail)}\nhour=${new Date().getUTCHours()}\n`,
     );
   }
 }

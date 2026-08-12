@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # State lives in the Actions cache between runs, not in a commit. Committing
       # it hourly would add a full copy of the file to git history 24 times a day.
