@@ -65,13 +65,13 @@ jobs:
 
       - name: Save seen state
         uses: actions/cache/save@v4
-        if: always()
+        if: always() && hashFiles('state/seen.json') != ''
         with:
           path: state/seen.json
           key: seen-${{ github.run_id }}
 
       - name: Email new roles
-        if: steps.hunt.outputs.new_count != '0'
+        if: steps.hunt.outputs.new_count != '0' && hashFiles('out/email.html') != ''
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
