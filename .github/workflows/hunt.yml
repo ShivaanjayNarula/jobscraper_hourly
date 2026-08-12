@@ -82,7 +82,7 @@ jobs:
           from: Job Alerts <${{ secrets.GMAIL_USER }}>
           to: ${{ secrets.ALERT_TO }}
           subject: '[jobs] ${{ steps.hunt.outputs.subject }}'
-          html_body: file://out/email.html
+          html_body: file://${{ github.workspace }}/out/email.html
 
       # companies.json is hand-curated, so its history is worth keeping on main.
       - name: Commit board list
