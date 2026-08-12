@@ -1,0 +1,87 @@
+# Company domains for `npm run detect -- domains.txt`
+# Format: domain[,industry]
+# Resolves each careers page to its real ATS board. Use this instead of probe.txt
+# when the board token isn't guessable from the brand name — Razorpay's Greenhouse
+# token is "razorpaysoftwareprivatelimited", which no slug guess would ever find.
+
+# ---- India: consumer, commerce, logistics ----
+razorpay.com,fintech
+zomato.com
+swiggy.com
+zeptonow.com
+blinkit.com
+flipkart.com
+meesho.com
+udaan.com
+delhivery.com
+lenskart.com
+nykaa.com
+urbancompany.com
+cars24.com
+rapido.bike
+porter.in
+zetwerk.com
+moglix.com
+licious.in
+purplle.com
+mamaearth.in
+firstcry.com
+countrydelight.in
+ather.in
+
+# ---- India: fintech ----
+paytm.com,fintech
+policybazaar.com,fintech
+zerodha.com,fintech
+navi.com,fintech
+bharatpe.com,fintech
+pinelabs.com,fintech
+juspay.in,fintech
+cashfree.com,fintech
+upstox.com,fintech
+angelone.in,fintech
+smallcase.com,fintech
+lendingkart.com,fintech
+kredx.com,fintech
+
+# ---- India: SaaS, infra, services ----
+zoho.com
+browserstack.com
+hasura.io
+whatfix.com
+darwinbox.com
+keka.com
+innovaccer.com
+chargebee.com
+capillarytech.com
+clevertap.com
+moengage.com
+netcorecloud.com
+icertis.com
+uniphore.com
+gupshup.io
+yellow.ai
+exotel.com
+leadsquared.com
+sprinklr.com
+fractal.ai
+tredence.com
+quantiphi.com
+
+# ---- India: gaming, edtech, health ----
+dream11.com
+sharechat.com
+mpl.live
+games24x7.com
+gameskraft.com
+nazara.com
+pw.live
+unacademy.com
+vedantu.com
+upgrad.com
+eruditus.com
+healthifyme.com
+cult.fit
+practo.com
+pharmeasy.in
+1mg.com

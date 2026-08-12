@@ -1,0 +1,27 @@
+{
+  "name": "jobscraper-next",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hourly fresher/intern job alerts from company ATS boards. No database, no paid services.",
+  "scripts": {
+    "hunt": "tsx src/index.ts",
+    "test": "tsx src/selftest.ts",
+    "discover": "tsx src/discover.ts",
+    "dry": "DRY_RUN=1 tsx src/index.ts",
+    "preview": "tsx src/preview.ts",
+    "probe": "tsx src/probe.ts",
+    "detect": "tsx src/detect.ts",
+    "import": "tsx src/import-urls.ts",
+    "debug": "tsx src/debug.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "playwright": "^1.62.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

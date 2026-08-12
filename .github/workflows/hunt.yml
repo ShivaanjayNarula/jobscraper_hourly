@@ -1,0 +1,115 @@
+name: hunt
+
+on:
+  schedule:
+    # :17 rather than :00 — the top of the hour is when GitHub's scheduler queue
+    # is most congested and runs get delayed the longest.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      test_email:
+        description: 'Send a test email containing everything that currently matches'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hunt
+  cancel-in-progress: false
+
+jobs:
+  hunt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # State lives in the Actions cache between runs, not in a commit. Committing
+      # it hourly would add a full copy of the file to git history 24 times a day.
+      # The committed snapshot below is the durable backup if a cache is evicted.
+      - name: Restore seen state
+        uses: actions/cache/restore@v4
+        with:
+          path: state/seen.json
+          key: seen-${{ github.run_id }}
+          restore-keys: seen-
+
+      - run: npm install --no-audit --no-fund
+
+      # Only Google and Meta need a real browser; everything else is a JSON call.
+      # The download is ~115 MB, so it's cached — otherwise it would dominate the
+      # runtime of an otherwise six-minute job.
+      - name: Cache Chromium
+        id: chromium-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-v1
+
+      # Non-fatal: only 5 of 381 boards need a browser, and the adapter returns
+      # empty rather than throwing when Playwright is missing. A bad install
+      # should never cost you the other 376.
+      - name: Install Chromium
+        continue-on-error: true
+        run: npx playwright install --with-deps chromium
+
+      - id: hunt
+        run: npm run hunt
+        env:
+          TEST_EMAIL: ${{ inputs.test_email && '1' || '0' }}
+
+      - name: Save seen state
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/seen.json
+          key: seen-${{ github.run_id }}
+
+      - name: Email new roles
+        if: steps.hunt.outputs.new_count != '0'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.GMAIL_USER }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          from: Job Alerts <${{ secrets.GMAIL_USER }}>
+          to: ${{ secrets.ALERT_TO }}
+          subject: '[jobs] ${{ steps.hunt.outputs.subject }}'
+          html_body: file://out/email.html
+
+      # companies.json is hand-curated, so its history is worth keeping on main.
+      - name: Commit board list
+        if: '!inputs.test_email'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'companies: board list update [skip ci]'
+          file_pattern: companies.json
+
+      # The catalogue is DERIVED data — regenerable from the boards at any time,
+      # so its history has no value. Keeping it on main would add a fresh copy to
+      # git 24 times a day, forever. Instead it lives on an orphan `data` branch
+      # that is force-pushed as a single commit, so it never accumulates history.
+      #
+      # state/seen.json isn't published at all: at ~150,000 live postings it is
+      # ~9.5 MB. It lives in the Actions cache, and if that is ever evicted the
+      # run seeds itself from this catalogue and stays silent for one cycle.
+      - name: Publish catalog to data branch
+        if: '!inputs.test_email'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          publish=$(mktemp -d)
+          cp data/jobs.json "$publish/jobs.json"
+          cd "$publish"
+          git init -q
+          git checkout -qb data
+          git add jobs.json
+          git -c user.name='github-actions[bot]'               -c user.email='github-actions[bot]@users.noreply.github.com'               commit -qm "catalog: ${{ steps.hunt.outputs.new_count }} new"
+          git push -qf "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git" data

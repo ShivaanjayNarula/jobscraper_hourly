@@ -1,0 +1,32 @@
+name: discover
+
+on:
+  schedule:
+    # Sundays. Common Crawl publishes a new index roughly monthly, so weekly is
+    # plenty — most runs will find only a handful of genuinely new boards.
+    - cron: '40 4 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install --no-audit --no-fund
+
+      - run: npm run discover
+
+      - name: Commit new boards
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'discover: new boards from Common Crawl [skip ci]'
+          file_pattern: companies.json state/discover-cursor.json

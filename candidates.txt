@@ -1,0 +1,216 @@
+# Candidate board slugs for `npm run probe -- candidates.txt`
+# Format: slug[,industry]   industry = tech | fintech | quant | banking | consulting
+# Only Greenhouse/Lever/Ashby are probed — their token is derived from the company
+# name. Workday and Oracle tenants are opaque and come from the Common Crawl
+# harvest in discover.ts instead.
+
+# ---- India: consumer & commerce ----
+zepto
+swiggy
+zomato
+blinkit
+flipkart
+meesho
+udaan
+delhivery
+lenskart
+nykaa
+urbancompany
+cars24
+rapido
+ola
+olacabs
+dunzo
+porter
+shiprocket
+zetwerk
+moglix
+infra market
+elasticrun
+dealshare
+licious
+firstcry
+purplle
+mamaearth
+boat lifestyle
+noise
+ather energy
+country delight
+
+# ---- India: fintech ----
+razorpay,fintech
+paytm,fintech
+policybazaar,fintech
+zerodha,fintech
+jupiter,fintech
+navi,fintech
+khatabook,fintech
+bharatpe,fintech
+pinelabs,fintech
+juspay,fintech
+zeta,fintech
+setu,fintech
+cashfree,fintech
+easebuzz,fintech
+decentro,fintech
+perfios,fintech
+signzy,fintech
+upstox,fintech
+angelone,fintech
+smallcase,fintech
+inditrade,fintech
+kredx,fintech
+lendingkart,fintech
+
+# ---- India: SaaS & infra ----
+freshworks
+zoho
+browserstack
+hasura
+atlan
+whatfix
+darwinbox
+keka
+innovaccer
+chargebee
+capillary
+wingify
+clevertap
+moengage
+webengage
+netcore
+icertis
+druva
+uniphore
+gupshup
+haptik
+yellow ai
+verloop
+exotel
+leadsquared
+kaleyra
+sprinklr
+zluri
+rippling
+locobuzz
+fractal analytics
+mathco
+tredence
+quantiphi
+turing
+crediwatch
+
+# ---- India: gaming, edtech, health ----
+dream11
+sharechat
+mpl
+games24x7
+gameskraft
+junglee games
+nazara
+physicswallah
+unacademy
+byjus
+vedantu
+eruditus
+upgrad
+emeritus
+healthifyme
+curefit
+practo
+pharmeasy
+tata1mg
+medibuddy
+
+# ---- Global tech / S&P 500 & large caps ----
+snowflake
+mongodb
+datadog
+crowdstrike
+zscaler
+fortinet
+paloaltonetworks
+okta
+elastic
+confluent
+hashicorp
+docker
+grafana
+gitlab
+atlassian
+servicenow
+workday
+intuit
+block
+squareup
+affirm
+chime,fintech
+plaid,fintech
+marqeta,fintech
+sofi,fintech
+wise,fintech
+revolut,fintech
+klarna,fintech
+adyen,fintech
+checkout,fintech
+nubank,fintech
+doordash
+uber
+lyft
+netflix
+spotify
+shopify
+squarespace
+wayfair
+etsy
+ebay
+zillow
+redfin
+opendoor
+peloton
+roblox
+unity
+epicgames
+riotgames
+activision
+ea
+zynga
+twitch
+cloudkitchens
+waymo
+cruise
+rivian
+lucidmotors
+nuro
+zoox
+
+# ---- Quant / trading ----
+janestreet,quant
+imc,quant
+optiver,quant
+drw,quant
+jumptrading,quant
+towerresearch,quant
+hudson river trading,quant
+citadel,quant
+twosigma,quant
+squarepoint,quant
+millennium,quant
+qube research,quant
+xtx markets,quant
+quadeye,quant
+graviton,quant
+alphagrep,quant
+worldquant,quant
+davinci,quant
+maven securities,quant
+akuna capital,quant
+
+# ---- Consulting ----
+zs associates,consulting
+bain,consulting
+mckinsey,consulting
+bcg,consulting
+kearney,consulting
+alvarez marsal,consulting
+oliver wyman,consulting

@@ -1,0 +1,12 @@
+node_modules/
+out/
+*.log
+.DS_Store
+.env
+
+# ~9 MB of job IDs, rewritten every hour. It lives in the Actions cache, never in
+# git — a full copy per commit would add gigabytes a year. If the cache is ever
+# evicted, the run seeds itself from data/jobs.json and stays silent for one
+# cycle. state/discover-cursor.json IS committed: it's tiny and the weekly
+# Common Crawl sweep needs it to know which block to scan next.
+state/seen.json

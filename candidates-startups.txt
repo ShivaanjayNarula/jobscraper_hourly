@@ -1,0 +1,177 @@
+# Funded Indian startups + high-paying product companies, for slug probing.
+# Run: npm run probe -- candidates-startups.txt
+# Only kept if the board currently has at least one India/remote role.
+
+# ---- AI / deep tech (heavily funded 2025-2026) ----
+sarvam,tech
+krutrim,tech
+gnani,tech
+corover,tech
+haptik,tech
+observe ai,tech
+observeai,tech
+skit ai,tech
+skitai,tech
+mihup,tech
+vernacular ai,tech
+niki ai,tech
+fluid ai,tech
+sensegpt,tech
+neysa,tech
+e2e networks,tech
+yotta,tech
+tensorfuse,tech
+simplismart,tech
+composio,tech
+julep,tech
+portkey,tech
+truefoundry,tech
+lyzr,tech
+dashtoon,tech
+rocketium,tech
+pixis,tech
+mad street den,tech
+madstreetden,tech
+uniphore,tech
+gupshup,tech
+exotel,tech
+knowlarity,tech
+ozonetel,tech
+
+# ---- Fintech ----
+jupiter money,fintech
+fi money,fintech
+epifi,fintech
+onecard,fintech
+uni cards,fintech
+kiwi,fintech
+stable money,fintech
+inditrade,fintech
+wint wealth,fintech
+dezerv,fintech
+scripbox,fintech
+indmoney,fintech
+fisdom,fintech
+kuvera,fintech
+tickertape,fintech
+sensibull,fintech
+streak,fintech
+finbox,fintech
+credgenics,fintech
+recko,fintech
+zolve,fintech
+karbon,fintech
+open,fintech
+razorpayx,fintech
+setu,fintech
+decentro,fintech
+m2p,fintech
+zeta suite,fintech
+falcon,fintech
+rupifi,fintech
+progcap,fintech
+flexiloans,fintech
+indifi,fintech
+axio,fintech
+kreditbee,fintech
+moneyview,fintech
+paysense,fintech
+smartcoin,fintech
+
+# ---- SaaS / infra ----
+hasura,tech
+appsmith,tech
+tooljet,tech
+plivo,tech
+kaleyra,tech
+sprinklr,tech
+freshworks,tech
+chargebee,tech
+zluri,tech
+atlan,tech
+nutanix,tech
+druva,tech
+netskope,tech
+securonix,tech
+lucideus,tech
+safe security,tech
+cloudsek,tech
+traceable,tech
+levo ai,tech
+hackerearth,tech
+hackerrank,tech
+interviewbit,tech
+scaler,tech
+newton school,tech
+codingninjas,tech
+geeksforgeeks,tech
+crio,tech
+masai school,tech
+almabetter,tech
+
+# ---- Consumer / commerce ----
+zepto now,tech
+country delight,tech
+licious,tech
+freshtohome,tech
+bigbasket,tech
+dunzo,tech
+swiggy instamart,tech
+blinkit,tech
+zomato hyperpure,tech
+rapido,tech
+bounce,tech
+yulu,tech
+blusmart,tech
+chalo,tech
+shadowfax,tech
+loadshare,tech
+xpressbees,tech
+ecom express,tech
+wow momo,tech
+rebel foods,tech
+eatfit,tech
+box8,tech
+
+# ---- Global high-payers not yet covered ----
+rippling,tech
+deel,tech
+gusto,tech
+checkr,tech
+flexport,tech
+faire,tech
+whatnot,tech
+mercury,fintech
+modern treasury,fintech
+unit,fintech
+lithic,fintech
+increase,fintech
+column,fintech
+anrok,fintech
+pilot,fintech
+vanta,tech
+drata,tech
+secureframe,tech
+material security,tech
+abnormal security,tech
+wiz,tech
+orca security,tech
+snyk,tech
+semgrep,tech
+chainguard,tech
+tailscale,tech
+ngrok,tech
+warp,tech
+linear app,tech
+figma,tech
+framer,tech
+webflow,tech
+retool,tech
+airtable,tech
+notion labs,tech
+coda,tech
+loom,tech
+miro,tech
+canva,tech
+grammarly,tech
+duolingo,tech
