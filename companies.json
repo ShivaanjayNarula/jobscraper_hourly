@@ -4757,7 +4757,8 @@
     "host": "wd1",
     "site": "StrykerCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T17:15:49.003Z"
   },
   {
     "name": "tmobile",
@@ -8305,7 +8306,8 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T17:15:49.003Z"
   },
   {
     "name": "guardianpharmacy",
@@ -8332,7 +8334,8 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T17:15:49.003Z"
   },
   {
     "name": "greif",
@@ -8624,7 +8627,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T17:15:49.003Z"
   },
   {
     "name": "loyola",
@@ -8690,7 +8694,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T17:15:49.003Z"
   },
   {
     "name": "ruelala",
@@ -9259,7 +9264,8 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T17:15:49.003Z"
   },
   {
     "name": "qualys",
@@ -10389,7 +10395,8 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T17:15:49.003Z"
   },
   {
     "name": "Arista Networks",
