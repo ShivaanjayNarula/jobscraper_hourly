@@ -6179,8 +6179,7 @@
     "host": "wd3",
     "site": "fme",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "harriscomputer",
@@ -6234,8 +6233,7 @@
     "host": "wd3",
     "site": "broadbean_external",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "johnsonelectric",
@@ -6244,8 +6242,7 @@
     "host": "wd3",
     "site": "Career_JE",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "maersk",
@@ -6281,8 +6278,7 @@
     "host": "wd3",
     "site": "Lonza_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "myhr",
@@ -6300,8 +6296,7 @@
     "host": "wd3",
     "site": "Michelin",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "novartis",
@@ -6310,8 +6305,7 @@
     "host": "wd3",
     "site": "Novartis_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "iconcareers",
@@ -6747,8 +6741,7 @@
     "host": "wd3",
     "site": "Nutreco_External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "jensenhughes",
@@ -8646,8 +8639,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "lnw",
@@ -8666,8 +8658,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "logitech",
@@ -10407,7 +10398,8 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T10:30:12.222Z"
   },
   {
     "name": "Arista Networks",
