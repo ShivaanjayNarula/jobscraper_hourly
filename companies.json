@@ -1790,8 +1790,7 @@
     "ats": "greenhouse",
     "token": "blinkhealth",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T13:51:30.066Z"
+    "source": "discovered"
   },
   {
     "name": "blueconic",
@@ -2085,8 +2084,7 @@
     "ats": "greenhouse",
     "token": "cribl",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T13:51:30.066Z"
+    "source": "discovered"
   },
   {
     "name": "crunchyroll",
@@ -8298,8 +8296,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T06:48:37.598Z"
+    "source": "discovered"
   },
   {
     "name": "generalmotors",
@@ -8308,8 +8305,7 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T06:48:37.598Z"
+    "source": "discovered"
   },
   {
     "name": "guardianpharmacy",
@@ -8336,8 +8332,7 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "greif",
@@ -9264,8 +9259,7 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T06:48:37.598Z"
+    "source": "discovered"
   },
   {
     "name": "qualys",
@@ -10395,8 +10389,7 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-13T13:51:30.066Z"
+    "source": "curated"
   },
   {
     "name": "Arista Networks",
