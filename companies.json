@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T12:02:09.760Z"
   },
   {
     "name": "2k",
@@ -8619,8 +8620,7 @@
     "host": "wd5",
     "site": "KyndrylEarlyCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "lifestance",
@@ -10398,8 +10398,7 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-13T10:30:12.222Z"
+    "source": "curated"
   },
   {
     "name": "Arista Networks",
