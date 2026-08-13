@@ -2348,7 +2348,8 @@
     "ats": "rendered",
     "token": "dazn",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T19:28:58.927Z"
   },
   {
     "name": "eqvilentjobs",
@@ -4784,7 +4785,8 @@
     "host": "wd1",
     "site": "Jobs",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T19:28:58.927Z"
   },
   {
     "name": "uhaul",
@@ -6972,7 +6974,8 @@
     "ats": "greenhouse",
     "token": "link",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T19:28:58.927Z"
   },
   {
     "name": "lisc",
@@ -7238,7 +7241,8 @@
     "ats": "greenhouse",
     "token": "mhi",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T19:28:58.927Z"
   },
   {
     "name": "midihealth",
@@ -8065,7 +8069,8 @@
     "ats": "greenhouse",
     "token": "pay2dc",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T19:28:58.927Z"
   },
   {
     "name": "paypay",
@@ -9266,7 +9271,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T19:28:58.927Z"
   },
   {
     "name": "redhat",
@@ -9285,7 +9291,8 @@
     "host": "wd5",
     "site": "rocket_careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T19:28:58.927Z"
   },
   {
     "name": "republic",
