@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-13T21:06:23.348Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -4749,8 +4748,7 @@
     "host": "wd1",
     "site": "careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T21:06:23.348Z"
+    "source": "discovered"
   },
   {
     "name": "stryker",
@@ -8307,7 +8305,8 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T22:05:56.956Z"
   },
   {
     "name": "guardianpharmacy",
@@ -8692,7 +8691,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T22:05:56.956Z"
   },
   {
     "name": "ruelala",
@@ -10321,8 +10321,7 @@
     "token": "qualcomm.eightfold.ai",
     "site": "qualcomm.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-13T21:06:23.348Z"
+    "source": "curated"
   },
   {
     "name": "SAP",
@@ -10393,7 +10392,8 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T22:05:56.956Z"
   },
   {
     "name": "Arista Networks",
