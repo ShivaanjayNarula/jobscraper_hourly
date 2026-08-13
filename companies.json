@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-13T12:02:09.760Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -1791,7 +1790,8 @@
     "ats": "greenhouse",
     "token": "blinkhealth",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T13:51:30.066Z"
   },
   {
     "name": "blueconic",
@@ -2085,7 +2085,8 @@
     "ats": "greenhouse",
     "token": "cribl",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T13:51:30.066Z"
   },
   {
     "name": "crunchyroll",
@@ -8345,8 +8346,7 @@
     "host": "wd5",
     "site": "Greif",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T08:45:39.103Z"
+    "source": "discovered"
   },
   {
     "name": "hexcel",
@@ -8629,8 +8629,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T06:48:37.598Z"
+    "source": "discovered"
   },
   {
     "name": "loyola",
@@ -8648,8 +8647,7 @@
     "host": "wd5",
     "site": "LightWonderExternalCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T06:48:37.598Z"
+    "source": "discovered"
   },
   {
     "name": "manh",
@@ -8697,8 +8695,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T06:48:37.598Z"
+    "source": "discovered"
   },
   {
     "name": "ruelala",
@@ -10398,7 +10395,8 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T13:51:30.066Z"
   },
   {
     "name": "Arista Networks",
