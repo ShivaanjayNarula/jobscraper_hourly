@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T21:06:23.348Z"
   },
   {
     "name": "2k",
@@ -2348,8 +2349,7 @@
     "ats": "rendered",
     "token": "dazn",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-13T19:28:58.927Z"
+    "source": "curated"
   },
   {
     "name": "eqvilentjobs",
@@ -4749,7 +4749,8 @@
     "host": "wd1",
     "site": "careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T21:06:23.348Z"
   },
   {
     "name": "stryker",
@@ -4785,8 +4786,7 @@
     "host": "wd1",
     "site": "Jobs",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T19:28:58.927Z"
+    "source": "discovered"
   },
   {
     "name": "uhaul",
@@ -6974,8 +6974,7 @@
     "ats": "greenhouse",
     "token": "link",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T19:28:58.927Z"
+    "source": "discovered"
   },
   {
     "name": "lisc",
@@ -7241,8 +7240,7 @@
     "ats": "greenhouse",
     "token": "mhi",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T19:28:58.927Z"
+    "source": "discovered"
   },
   {
     "name": "midihealth",
@@ -8069,8 +8067,7 @@
     "ats": "greenhouse",
     "token": "pay2dc",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T19:28:58.927Z"
+    "source": "discovered"
   },
   {
     "name": "paypay",
@@ -8665,7 +8662,8 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T21:06:23.348Z"
   },
   {
     "name": "magellanhealth",
@@ -8674,7 +8672,8 @@
     "host": "wd5",
     "site": "magellan_health_careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T21:06:23.348Z"
   },
   {
     "name": "lowes",
@@ -9262,7 +9261,8 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T21:06:23.348Z"
   },
   {
     "name": "qualys",
@@ -10051,7 +10051,8 @@
     "host": "wd5",
     "site": "ZOLLMedicalCorp",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T21:06:23.348Z"
   },
   {
     "name": "wri",
@@ -10320,7 +10321,8 @@
     "token": "qualcomm.eightfold.ai",
     "site": "qualcomm.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T21:06:23.348Z"
   },
   {
     "name": "SAP",
