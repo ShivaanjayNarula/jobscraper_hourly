@@ -6233,7 +6233,8 @@
     "host": "wd3",
     "site": "broadbean_external",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "johnsonelectric",
@@ -6278,7 +6279,8 @@
     "host": "wd3",
     "site": "Lonza_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "myhr",
@@ -6296,7 +6298,8 @@
     "host": "wd3",
     "site": "Michelin",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "novartis",
@@ -6305,7 +6308,8 @@
     "host": "wd3",
     "site": "Novartis_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "iconcareers",
@@ -8691,8 +8695,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T22:05:56.956Z"
+    "source": "discovered"
   },
   {
     "name": "ruelala",
@@ -10051,8 +10054,7 @@
     "host": "wd5",
     "site": "ZOLLMedicalCorp",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T21:06:23.348Z"
+    "source": "discovered"
   },
   {
     "name": "wri",
@@ -10328,21 +10330,24 @@
     "ats": "successfactors",
     "token": "jobs.sap.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "Volvo Cars",
     "ats": "successfactors",
     "token": "jobs.volvocars.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "ZF",
     "ats": "successfactors",
     "token": "jobs.zf.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "Mahindra",
@@ -10392,8 +10397,7 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-13T22:05:56.956Z"
+    "source": "curated"
   },
   {
     "name": "Arista Networks",
@@ -10437,7 +10441,8 @@
     "ats": "successfactors",
     "token": "basf.jobs",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   },
   {
     "name": "Lupin",
@@ -10451,6 +10456,7 @@
     "ats": "successfactors",
     "token": "careers.bajajauto.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-13T23:05:12.961Z"
   }
 ]
