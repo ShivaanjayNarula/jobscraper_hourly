@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-14T20:00:12.058Z"
   },
   {
     "name": "2k",
@@ -8240,8 +8241,7 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "guardianpharmacy",
@@ -8626,8 +8626,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T19:17:16.586Z"
+    "source": "discovered"
   },
   {
     "name": "ruelala",
@@ -9196,8 +9195,7 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "qualys",
@@ -9206,8 +9204,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "redhat",
