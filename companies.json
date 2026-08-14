@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-14T08:39:39.514Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -7986,7 +7985,8 @@
     "host": "wd5",
     "site": "CaterpillarCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "carrier",
@@ -8334,7 +8334,8 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "greif",
@@ -8343,7 +8344,8 @@
     "host": "wd5",
     "site": "Greif",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "hexcel",
@@ -8644,7 +8646,8 @@
     "host": "wd5",
     "site": "LightWonderExternalCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "manh",
@@ -8662,7 +8665,8 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "magellanhealth",
@@ -8671,7 +8675,8 @@
     "host": "wd5",
     "site": "magellan_health_careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "lowes",
@@ -8690,7 +8695,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "ruelala",
@@ -9259,7 +9265,8 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "qualys",
@@ -10389,7 +10396,8 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-14T10:19:07.397Z"
   },
   {
     "name": "Arista Networks",
