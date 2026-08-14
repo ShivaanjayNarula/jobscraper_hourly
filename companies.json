@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-14T20:00:12.058Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -8241,7 +8240,8 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T20:48:37.347Z"
   },
   {
     "name": "guardianpharmacy",
@@ -9204,7 +9204,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T20:48:37.347Z"
   },
   {
     "name": "redhat",
