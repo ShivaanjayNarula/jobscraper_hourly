@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-14T13:46:52.019Z"
   },
   {
     "name": "2k",
@@ -6233,8 +6234,7 @@
     "host": "wd3",
     "site": "broadbean_external",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T11:59:53.197Z"
+    "source": "discovered"
   },
   {
     "name": "johnsonelectric",
@@ -6279,8 +6279,7 @@
     "host": "wd3",
     "site": "Lonza_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T11:59:53.197Z"
+    "source": "discovered"
   },
   {
     "name": "myhr",
@@ -6307,8 +6306,7 @@
     "host": "wd3",
     "site": "Novartis_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T11:59:53.197Z"
+    "source": "discovered"
   },
   {
     "name": "iconcareers",
@@ -6744,8 +6742,7 @@
     "host": "wd3",
     "site": "Nutreco_External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T11:59:53.197Z"
+    "source": "discovered"
   },
   {
     "name": "jensenhughes",
@@ -8309,7 +8306,8 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T13:46:52.019Z"
   },
   {
     "name": "guardianpharmacy",
@@ -8673,7 +8671,8 @@
     "host": "wd5",
     "site": "magellan_health_careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T13:46:52.019Z"
   },
   {
     "name": "lowes",
@@ -9270,7 +9269,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T13:46:52.019Z"
   },
   {
     "name": "redhat",
@@ -9289,7 +9289,8 @@
     "host": "wd5",
     "site": "rocket_careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T13:46:52.019Z"
   },
   {
     "name": "republic",
@@ -10389,7 +10390,8 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-14T13:46:52.019Z"
   },
   {
     "name": "Arista Networks",
