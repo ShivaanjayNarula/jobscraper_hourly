@@ -8626,7 +8626,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-14T19:17:16.586Z"
   },
   {
     "name": "ruelala",
