@@ -314,7 +314,8 @@
     "token": "jpmc",
     "siteNumber": "CX_1001",
     "industry": "banking",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-15T16:44:11.703Z"
   },
   {
     "name": "Amazon",
@@ -2276,8 +2277,7 @@
     "ats": "rendered",
     "token": "vanguard",
     "industry": "banking",
-    "source": "curated",
-    "failingSince": "2026-08-15T15:37:53.168Z"
+    "source": "curated"
   },
   {
     "name": "DAZN",
@@ -8241,8 +8241,7 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "guardianpharmacy",
@@ -8597,8 +8596,7 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "magellanhealth",
@@ -8607,8 +8605,7 @@
     "host": "wd5",
     "site": "magellan_health_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "lowes",
@@ -8617,8 +8614,7 @@
     "host": "wd5",
     "site": "lws_external_cs",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "meredith",
@@ -9205,8 +9201,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "redhat",
@@ -9215,8 +9210,7 @@
     "host": "wd5",
     "site": "jobs",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "rocket",
@@ -9225,8 +9219,7 @@
     "host": "wd5",
     "site": "rocket_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "republic",
@@ -9563,8 +9556,7 @@
     "host": "wd5",
     "site": "taylormadegolf",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "tempus",
