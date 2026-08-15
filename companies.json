@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "2k",
@@ -6231,7 +6232,8 @@
     "host": "wd3",
     "site": "Michelin",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "novartis",
@@ -6676,7 +6678,8 @@
     "host": "wd3",
     "site": "Nutreco_External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "jensenhughes",
@@ -8243,8 +8246,7 @@
     "host": "wd5",
     "site": "Guardian_Pharmacy",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T22:41:12.010Z"
+    "source": "discovered"
   },
   {
     "name": "healthcatalyst",
@@ -8282,7 +8284,8 @@
     "host": "wd5",
     "site": "HexcelCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "pushpay",
@@ -8529,7 +8532,8 @@
     "host": "wd5",
     "site": "lu_job_board_faculty",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "liveramp",
@@ -8538,7 +8542,8 @@
     "host": "wd5",
     "site": "LiveRampCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "kyndryl",
@@ -8547,7 +8552,8 @@
     "host": "wd5",
     "site": "KyndrylEarlyCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "lifestance",
@@ -8556,7 +8562,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "loyola",
@@ -8565,7 +8572,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "lnw",
@@ -8574,7 +8582,8 @@
     "host": "wd5",
     "site": "LightWonderExternalCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "manh",
@@ -8583,7 +8592,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T23:36:33.690Z"
   },
   {
     "name": "logitech",
@@ -10285,8 +10295,7 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-15T22:41:12.010Z"
+    "source": "curated"
   },
   {
     "name": "Arista Networks",
