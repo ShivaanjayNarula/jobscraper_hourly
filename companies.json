@@ -8243,7 +8243,8 @@
     "host": "wd5",
     "site": "Guardian_Pharmacy",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T22:41:12.010Z"
   },
   {
     "name": "healthcatalyst",
@@ -10284,7 +10285,8 @@
     "host": "wd5",
     "site": "external",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-15T22:41:12.010Z"
   },
   {
     "name": "Arista Networks",
