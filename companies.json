@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-15T03:56:52.785Z"
   },
   {
     "name": "2k",
@@ -8231,8 +8232,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "generalmotors",
@@ -8241,8 +8241,7 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "guardianpharmacy",
@@ -8269,8 +8268,7 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "greif",
@@ -8279,8 +8277,7 @@
     "host": "wd5",
     "site": "Greif",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "hexcel",
@@ -8563,8 +8560,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "loyola",
@@ -8582,8 +8578,7 @@
     "host": "wd5",
     "site": "LightWonderExternalCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "manh",
@@ -8592,8 +8587,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "logitech",
@@ -8602,8 +8596,7 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "magellanhealth",
@@ -8612,8 +8605,7 @@
     "host": "wd5",
     "site": "magellan_health_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "lowes",
@@ -8622,8 +8614,7 @@
     "host": "wd5",
     "site": "lws_external_cs",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "meredith",
@@ -8632,8 +8623,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "ruelala",
@@ -9202,8 +9192,7 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "qualys",
@@ -9212,8 +9201,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "redhat",
@@ -9232,8 +9220,7 @@
     "host": "wd5",
     "site": "rocket_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "republic",
@@ -9570,8 +9557,7 @@
     "host": "wd5",
     "site": "taylormadegolf",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T03:07:39.303Z"
+    "source": "discovered"
   },
   {
     "name": "tempus",
@@ -9953,8 +9939,7 @@
     "host": "wd5",
     "site": "Zoom",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T05:06:46.247Z"
+    "source": "discovered"
   },
   {
     "name": "modmed",
@@ -9972,8 +9957,7 @@
     "host": "wd5",
     "site": "ZOLLMedicalCorp",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T00:01:14.645Z"
+    "source": "discovered"
   },
   {
     "name": "wri",
