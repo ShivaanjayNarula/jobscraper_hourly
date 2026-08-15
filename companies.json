@@ -8231,7 +8231,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T11:52:54.100Z"
   },
   {
     "name": "generalmotors",
@@ -8277,7 +8278,8 @@
     "host": "wd5",
     "site": "Greif",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T11:52:54.100Z"
   },
   {
     "name": "hexcel",
@@ -8626,7 +8628,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T11:52:54.100Z"
   },
   {
     "name": "ruelala",
@@ -9663,8 +9666,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-13T06:48:37.598Z"
+    "source": "discovered"
   },
   {
     "name": "torcrobotics",
