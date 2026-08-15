@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-15T19:37:58.049Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -7536,14 +7535,6 @@
     "source": "discovered"
   },
   {
-    "name": "noble",
-    "ats": "greenhouse",
-    "token": "noble",
-    "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-12T20:13:41.868Z"
-  },
-  {
     "name": "noctrixhealth",
     "ats": "greenhouse",
     "token": "noctrixhealth",
@@ -8597,7 +8588,8 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T20:41:50.779Z"
   },
   {
     "name": "magellanhealth",
