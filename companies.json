@@ -9201,7 +9201,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T17:38:27.781Z"
   },
   {
     "name": "redhat",
@@ -9210,7 +9211,8 @@
     "host": "wd5",
     "site": "jobs",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T17:38:27.781Z"
   },
   {
     "name": "rocket",
@@ -9556,7 +9558,8 @@
     "host": "wd5",
     "site": "taylormadegolf",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T17:38:27.781Z"
   },
   {
     "name": "tempus",
@@ -9928,8 +9931,7 @@
     "host": "wd5",
     "site": "Zoom",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T04:49:29.795Z"
+    "source": "discovered"
   },
   {
     "name": "modmed",
@@ -9947,8 +9949,7 @@
     "host": "wd5",
     "site": "ZOLLMedicalCorp",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T04:49:29.795Z"
+    "source": "discovered"
   },
   {
     "name": "wri",
