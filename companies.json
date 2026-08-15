@@ -297,7 +297,8 @@
     "host": "wd5",
     "site": "external_experienced",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-15T13:01:17.502Z"
   },
   {
     "name": "PayPal",
@@ -8269,7 +8270,8 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T13:01:17.502Z"
   },
   {
     "name": "greif",
@@ -8562,7 +8564,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T13:01:17.502Z"
   },
   {
     "name": "loyola",
@@ -8580,7 +8583,8 @@
     "host": "wd5",
     "site": "LightWonderExternalCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T13:01:17.502Z"
   },
   {
     "name": "manh",
@@ -8589,7 +8593,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T13:01:17.502Z"
   },
   {
     "name": "logitech",
@@ -9666,7 +9671,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T13:01:17.502Z"
   },
   {
     "name": "torcrobotics",
@@ -10227,7 +10233,8 @@
     "token": "qualcomm.eightfold.ai",
     "site": "qualcomm.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-15T13:01:17.502Z"
   },
   {
     "name": "SAP",
