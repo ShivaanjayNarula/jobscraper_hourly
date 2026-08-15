@@ -8231,8 +8231,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "generalmotors",
@@ -8269,8 +8268,7 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "greif",
@@ -8279,8 +8277,7 @@
     "host": "wd5",
     "site": "Greif",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "hexcel",
@@ -8289,8 +8286,7 @@
     "host": "wd5",
     "site": "HexcelCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T10:42:29.329Z"
+    "source": "discovered"
   },
   {
     "name": "pushpay",
@@ -8537,8 +8533,7 @@
     "host": "wd5",
     "site": "lu_job_board_faculty",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T10:42:29.329Z"
+    "source": "discovered"
   },
   {
     "name": "liveramp",
@@ -8556,8 +8551,7 @@
     "host": "wd5",
     "site": "KyndrylEarlyCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T10:42:29.329Z"
+    "source": "discovered"
   },
   {
     "name": "lifestance",
@@ -8566,8 +8560,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "loyola",
@@ -8576,8 +8569,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T10:42:29.329Z"
+    "source": "discovered"
   },
   {
     "name": "lnw",
@@ -8586,8 +8578,7 @@
     "host": "wd5",
     "site": "LightWonderExternalCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "manh",
@@ -8596,8 +8587,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "logitech",
@@ -8636,8 +8626,7 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "ruelala",
