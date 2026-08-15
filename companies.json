@@ -8269,7 +8269,8 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T14:41:51.490Z"
   },
   {
     "name": "greif",
@@ -8562,7 +8563,8 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T14:41:51.490Z"
   },
   {
     "name": "loyola",
@@ -8580,7 +8582,8 @@
     "host": "wd5",
     "site": "LightWonderExternalCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T14:41:51.490Z"
   },
   {
     "name": "manh",
@@ -8589,7 +8592,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T14:41:51.490Z"
   },
   {
     "name": "logitech",
