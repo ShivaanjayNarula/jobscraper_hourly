@@ -8289,7 +8289,8 @@
     "host": "wd5",
     "site": "HexcelCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T10:42:29.329Z"
   },
   {
     "name": "pushpay",
@@ -8536,7 +8537,8 @@
     "host": "wd5",
     "site": "lu_job_board_faculty",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T10:42:29.329Z"
   },
   {
     "name": "liveramp",
@@ -8554,7 +8556,8 @@
     "host": "wd5",
     "site": "KyndrylEarlyCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T10:42:29.329Z"
   },
   {
     "name": "lifestance",
@@ -8573,7 +8576,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T10:42:29.329Z"
   },
   {
     "name": "lnw",
