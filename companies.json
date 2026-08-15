@@ -8554,8 +8554,7 @@
     "host": "wd5",
     "site": "KyndrylEarlyCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T08:47:38.237Z"
+    "source": "discovered"
   },
   {
     "name": "lifestance",
@@ -8574,8 +8573,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T08:47:38.237Z"
+    "source": "discovered"
   },
   {
     "name": "lnw",
@@ -10127,8 +10125,7 @@
     "host": "wd504",
     "site": "WalmartExternal",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T08:47:38.237Z"
+    "source": "discovered"
   },
   {
     "name": "Bankofamerica",
