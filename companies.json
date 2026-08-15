@@ -8223,7 +8223,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T21:37:50.217Z"
   },
   {
     "name": "generalmotors",
@@ -8260,7 +8261,8 @@
     "host": "wd5",
     "site": "GMED_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T21:37:50.217Z"
   },
   {
     "name": "greif",
@@ -8269,7 +8271,8 @@
     "host": "wd5",
     "site": "Greif",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T21:37:50.217Z"
   },
   {
     "name": "hexcel",
@@ -8618,7 +8621,8 @@
     "host": "wd5",
     "site": "EXT",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T21:37:50.217Z"
   },
   {
     "name": "ruelala",
@@ -9187,7 +9191,8 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-15T21:37:50.217Z"
   },
   {
     "name": "qualys",
