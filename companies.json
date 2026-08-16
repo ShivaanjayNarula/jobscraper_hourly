@@ -8191,8 +8191,7 @@
     "host": "wd5",
     "site": "Primary-External-1",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T05:06:43.660Z"
+    "source": "discovered"
   },
   {
     "name": "geaerospace",
@@ -8257,8 +8256,7 @@
     "host": "wd5",
     "site": "Guardian_Pharmacy",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T05:06:43.660Z"
+    "source": "discovered"
   },
   {
     "name": "healthcatalyst",
@@ -8296,8 +8294,7 @@
     "host": "wd5",
     "site": "HexcelCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T05:06:43.660Z"
+    "source": "discovered"
   },
   {
     "name": "pushpay",
