@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-16T05:46:36.996Z"
   },
   {
     "name": "2k",
@@ -6114,8 +6115,7 @@
     "host": "wd3",
     "site": "fme",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "harriscomputer",
@@ -6133,8 +6133,7 @@
     "host": "wd3",
     "site": "Global_HM_Career_Site",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "harman",
@@ -6211,8 +6210,7 @@
     "host": "wd3",
     "site": "MurexCareerPage1",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "lonza",
@@ -8209,7 +8207,8 @@
     "host": "wd5",
     "site": "GEHC_ExternalSite",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:46:36.996Z"
   },
   {
     "name": "globelife",
@@ -8256,7 +8255,8 @@
     "host": "wd5",
     "site": "Guardian_Pharmacy",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:46:36.996Z"
   },
   {
     "name": "healthcatalyst",
