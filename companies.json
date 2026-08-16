@@ -8587,8 +8587,7 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T18:48:24.786Z"
+    "source": "discovered"
   },
   {
     "name": "magellanhealth",
@@ -9573,7 +9572,8 @@
     "host": "wd5",
     "site": "careers_external",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T19:16:06.396Z"
   },
   {
     "name": "tollgroup",
@@ -10187,7 +10187,8 @@
     "token": "morganstanley.eightfold.ai",
     "site": "morganstanley.com",
     "industry": "banking",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-16T19:16:06.396Z"
   },
   {
     "name": "Qualcomm",
@@ -16879,8 +16880,7 @@
     "source": "discovered",
     "token": "fis",
     "host": "wd5",
-    "site": "searchjobs",
-    "failingSince": "2026-08-16T18:48:24.786Z"
+    "site": "searchjobs"
   },
   {
     "name": "Five9",
