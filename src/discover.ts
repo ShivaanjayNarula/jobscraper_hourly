@@ -108,7 +108,13 @@ async function main(): Promise<void> {
   const existing = await loadCompanies();
   const known = new Set(existing.map((c) => `${c.ats}:${c.token.toLowerCase()}`));
 
-  const indexUrl = await latestIndex();
+  let indexUrl: string;
+  try {
+    indexUrl = await latestIndex();
+  } catch (err) {
+    console.warn(`Common Crawl index unavailable (${(err as Error).message}) — skipping harvest for this run.`);
+    return;
+  }
   console.log(`harvesting from ${indexUrl}`);
 
   const cursor = await readJson<{ page: number }>(CURSOR_PATH, { page: 0 });
