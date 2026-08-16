@@ -1,0 +1,40 @@
+name: discover-news
+
+on:
+  schedule:
+    # Daily. Funding and India-expansion coverage turns over every day, and the
+    # feeds only expose the most recent ~20-50 items — a weekly run would read
+    # the same window and silently miss everything announced in between.
+    - cron: '25 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: discover-news
+  cancel-in-progress: false
+
+jobs:
+  discover-news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install --no-audit --no-fund
+
+      - run: npm run discover-news
+
+      # Most days this changes nothing — a run that finds no new board with an
+      # India role is the normal outcome, not a failure. git-auto-commit is a
+      # no-op when the file is unchanged.
+      - name: Commit new boards
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'discover: new boards from funding news [skip ci]'
+          file_pattern: companies.json
