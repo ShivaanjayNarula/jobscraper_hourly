@@ -179,6 +179,44 @@ tries both `acmecorp` and `acme-corp`. Only keeps boards that currently have an
 India or remote role.
 
 ```bash
+npm run bulk-import -- --bar india          # default; also: fresher, live
+npm run bulk-import -- --limit 200          # sample first, to sanity-check
+npm run bulk-import -- --platform greenhouse
+```
+
+Imports from [kalil0321/ats-scrapers](https://github.com/kalil0321/ats-scrapers)'
+published tenant lists — ~77,000 crawled ATS tenants, ~21,000 of them on
+platforms this codebase already reads, against ~16,600 we don't yet track.
+
+**This reaches boards `detect` and `probe` structurally cannot.** `detect` needs
+a careers page that links its own board, and most large employers don't link it
+from an obvious `/careers` path; `probe` only guesses tokens that resemble the
+brand name. A published tenant list sidesteps both — which is how KPMG India
+(496 India roles) and PwC (328) were found after both had been written off as
+"no ATS link found."
+
+Every candidate is polled before it's kept, because **a tenant slug that
+resolves is not evidence of a real company** — three plausible-looking "IBM"
+Oracle tenants turned out to be a Guatemalan retailer, an Iowa college and a
+Syracuse school district.
+
+The `--bar` picks how much evidence a board needs:
+
+| bar | keeps | measured yield | use when |
+|---|---|---|---|
+| `live` | returns any jobs at all | ~81% (~13,400) | almost never — most have never shown an India role |
+| `india` | has ≥1 India/remote role | ~14% (~2,300) | **default.** A company with an India office will post junior roles eventually |
+| `fresher` | has ≥1 role passing the full filter | ~6.5% (~1,080) | strictest; misses companies whose India office is currently senior-only |
+
+It runs weekly in `discover.yml`, and the **re-check is the point**: a board with
+zero India roles last week and India roles today gets promoted the week the
+office opens. That is the "Target is coming to India" case, handled without
+scraping any funding or expansion announcements. New tenants appearing in the
+crawl are also a reasonable proxy for fresh funding — adopting an ATS is what a
+company does right after it raises — with the advantage that it only ever
+surfaces companies that are provably hiring right now.
+
+```bash
 npm run discover
 ```
 
