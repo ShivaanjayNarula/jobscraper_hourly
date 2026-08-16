@@ -2269,8 +2269,7 @@
     "ats": "rendered",
     "token": "uber",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-16T20:41:26.844Z"
+    "source": "curated"
   },
   {
     "name": "Vanguard",
@@ -19178,8 +19177,7 @@
     "source": "discovered",
     "token": "issgovernance",
     "host": "wd1",
-    "site": "isscareers",
-    "failingSince": "2026-08-16T20:41:26.844Z"
+    "site": "isscareers"
   },
   {
     "name": "Itron",
@@ -19471,8 +19469,7 @@
     "source": "discovered",
     "token": "jupitermed",
     "host": "wd1",
-    "site": "external",
-    "failingSince": "2026-08-16T20:41:26.844Z"
+    "site": "external"
   },
   {
     "name": "Kairos",
@@ -19525,7 +19522,8 @@
     "source": "discovered",
     "token": "kansashealthsystem",
     "host": "wd1",
-    "site": "careers"
+    "site": "careers",
+    "failingSince": "2026-08-16T22:40:26.846Z"
   },
   {
     "name": "KarmaCheck",
@@ -20622,7 +20620,8 @@
     "source": "discovered",
     "token": "mastercard",
     "host": "wd1",
-    "site": "corporatecareers"
+    "site": "corporatecareers",
+    "failingSince": "2026-08-16T22:40:26.846Z"
   },
   {
     "name": "Match Group",
