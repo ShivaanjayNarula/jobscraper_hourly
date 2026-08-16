@@ -4,7 +4,13 @@ on:
   schedule:
     # :17 rather than :00 — the top of the hour is when GitHub's scheduler queue
     # is most congested and runs get delayed the longest.
-    - cron: '17 * * * *'
+    #
+    # Every 2 hours rather than hourly: the board count is growing past 3,000, and
+    # a run that overlaps the next one wastes a runner and races the same cache
+    # key. Nothing is lost by halving the cadence — postings do not expire in an
+    # hour, and the corpus is saturated, so a run's yield is set by how many roles
+    # were posted since the last one, not by how often we look.
+    - cron: '17 */2 * * *'
   workflow_dispatch:
     inputs:
       test_email:
@@ -27,7 +33,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       # State lives in the Actions cache between runs, not in a commit. Committing
       # it hourly would add a full copy of the file to git history 24 times a day.
@@ -65,14 +71,13 @@ jobs:
 
       - name: Save seen state
         uses: actions/cache/save@v4
-        if: always() && hashFiles('state/seen.json') != ''
+        if: always()
         with:
           path: state/seen.json
           key: seen-${{ github.run_id }}
 
       - name: Email new roles
-        if: steps.hunt.outputs.new_count != '0' && hashFiles('out/email.html') != ''
-        continue-on-error: true
+        if: steps.hunt.outputs.new_count != '0'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -83,7 +88,7 @@ jobs:
           from: Job Alerts <${{ secrets.GMAIL_USER }}>
           to: ${{ secrets.ALERT_TO }}
           subject: '[jobs] ${{ steps.hunt.outputs.subject }}'
-          html_body: file://${{ github.workspace }}/out/email.html
+          html_body: file://out/email.html
 
       # companies.json is hand-curated, so its history is worth keeping on main.
       - name: Commit board list
