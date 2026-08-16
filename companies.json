@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-16T15:35:49.491Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -7958,8 +7957,7 @@
     "host": "wd5",
     "site": "Cisco_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T15:35:49.491Z"
+    "source": "discovered"
   },
   {
     "name": "paretocaptiveservicesllc",
