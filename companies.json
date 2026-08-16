@@ -2269,7 +2269,8 @@
     "ats": "rendered",
     "token": "uber",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-16T20:41:26.844Z"
   },
   {
     "name": "Vanguard",
@@ -9572,8 +9573,7 @@
     "host": "wd5",
     "site": "careers_external",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T19:16:06.396Z"
+    "source": "discovered"
   },
   {
     "name": "tollgroup",
@@ -10187,8 +10187,7 @@
     "token": "morganstanley.eightfold.ai",
     "site": "morganstanley.com",
     "industry": "banking",
-    "source": "curated",
-    "failingSince": "2026-08-16T19:16:06.396Z"
+    "source": "curated"
   },
   {
     "name": "Qualcomm",
@@ -19179,7 +19178,8 @@
     "source": "discovered",
     "token": "issgovernance",
     "host": "wd1",
-    "site": "isscareers"
+    "site": "isscareers",
+    "failingSince": "2026-08-16T20:41:26.844Z"
   },
   {
     "name": "Itron",
@@ -19471,7 +19471,8 @@
     "source": "discovered",
     "token": "jupitermed",
     "host": "wd1",
-    "site": "external"
+    "site": "external",
+    "failingSince": "2026-08-16T20:41:26.844Z"
   },
   {
     "name": "Kairos",
