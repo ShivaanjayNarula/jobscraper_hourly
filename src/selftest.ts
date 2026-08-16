@@ -3,81 +3,81 @@ import { isFreshEnough, locationMatches, normalizeForDedup, roleFamily } from '.
 import type { Industry, RawJob } from './types.js';
 
 /**
- * Regression tests for the two regex layers that decide everything.
- *
- *   npm test
- *
- * Every case here is a bug that actually shipped. "Indiana" matching `india`
- * leaked 62 US roles into a real alert email before it was caught by eye — the
- * kind of thing a typecheck can never find.
- */
+* Regression tests for the two regex layers that decide everything.
+*
+*   npm test
+*
+* Every case here is a bug that actually shipped. "Indiana" matching `india`
+* leaked 62 US roles into a real alert email before it was caught by eye — the
+* kind of thing a typecheck can never find.
+*/
 let failures = 0;
 
 function check(label: string, got: unknown, want: unknown): void {
-  if (got !== want) {
-    failures++;
-    console.log(`  FAIL  ${label}\n        got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
-  }
+if (got !== want) {
+failures++;
+console.log(`  FAIL  ${label}\n        got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
+}
 }
 
 console.log('locations');
 const locations: [string, boolean][] = [
-  // Substring traps — these all leaked at some point.
-  ['United States - Indiana - Westfield', false],
-  ['US-IN-Indianapolis', false],
-  ['Indianapolis, Indiana, United States', false],
-  ['Goal setting, Texas', false],
-  // Genuine India.
-  ['India - Mumbai', true],
-  ['Bangalore, India', true],
-  ['IN, KA, Bengaluru', true],
-  ['Goa, India', true],
-  ['Hyderabad, Telangana, India', true],
-  // Remote handling: bare remote counts, region-locked remote does not.
-  ['Remote', true],
-  ['Remote - India', true],
-  ['Remote, Denmark', false],
-  ['Remote - Ireland', false],
-  ['Remote - US', false],
-  ['', false],
+// Substring traps — these all leaked at some point.
+['United States - Indiana - Westfield', false],
+['US-IN-Indianapolis', false],
+['Indianapolis, Indiana, United States', false],
+['Goal setting, Texas', false],
+// Genuine India.
+['India - Mumbai', true],
+['Bangalore, India', true],
+['IN, KA, Bengaluru', true],
+['Goa, India', true],
+['Hyderabad, Telangana, India', true],
+// Remote handling: bare remote counts, region-locked remote does not.
+['Remote', true],
+['Remote - India', true],
+['Remote, Denmark', false],
+['Remote - Ireland', false],
+['Remote - US', false],
+['', false],
 ];
 for (const [location, want] of locations) check(`location ${JSON.stringify(location)}`, locationMatches(location), want);
 
 console.log('seniority');
 const job = (title: string, text = ''): RawJob => ({ externalId: 'x', title, location: 'Bengaluru', url: '', text });
 const senior: [string, Industry][] = [
-  ['Head - Advanced Analytics', 'tech'],
-  ['Sr. Business Analyst', 'banking'],
-  ['Software Dev Engineer II', 'tech'],
-  ['Site Reliability Engineer - 2', 'tech'],
-  ['Forward Deployed Engineer - II', 'tech'],
-  ['Distinguished AI Engineer', 'banking'],
-  ['Principal Software Engineer', 'tech'],
-  ['Senior Software Engineer', 'tech'],
-  ['Engineering Manager, Looker', 'tech'],
-  ['Software Development Mgmt 5', 'tech'],
-  ['Data Platform Lead - L6', 'tech'],
-  // "Supv" (Supervisor) at a Workday-discovered company tagged plain "tech" —
-  // a management title with no other senior signal to catch it.
-  ['Supv Claim Analytics', 'tech'],
+['Head - Advanced Analytics', 'tech'],
+['Sr. Business Analyst', 'banking'],
+['Software Dev Engineer II', 'tech'],
+['Site Reliability Engineer - 2', 'tech'],
+['Forward Deployed Engineer - II', 'tech'],
+['Distinguished AI Engineer', 'banking'],
+['Principal Software Engineer', 'tech'],
+['Senior Software Engineer', 'tech'],
+['Engineering Manager, Looker', 'tech'],
+['Software Development Mgmt 5', 'tech'],
+['Data Platform Lead - L6', 'tech'],
+// "Supv" (Supervisor) at a Workday-discovered company tagged plain "tech" —
+// a management title with no other senior signal to catch it.
+['Supv Claim Analytics', 'tech'],
 ];
 for (const [title, industry] of senior) {
-  check(`senior: ${title}`, classify(job(title), industry).isJunior, false);
+check(`senior: ${title}`, classify(job(title), industry).isJunior, false);
 }
 
 const junior: [string, Industry][] = [
-  ['Software Engineer, University Graduate', 'tech'],
-  ['SDE-1, Payments', 'tech'],
-  ['Associate Application Engineer', 'tech'],
-  ['Analyst - Asset Servicing', 'banking'],
-  ['Business Analyst', 'consulting'],
-  // Level *I* / *1* is the entry rung — must NOT be caught by the II-IV/2-9
-  // senior suffix, or every genuinely junior "Engineer I" title gets rejected.
-  ['Software Test Engineer I', 'tech'],
-  ['Refrigeration Engineer I', 'tech'],
+['Software Engineer, University Graduate', 'tech'],
+['SDE-1, Payments', 'tech'],
+['Associate Application Engineer', 'tech'],
+['Analyst - Asset Servicing', 'banking'],
+['Business Analyst', 'consulting'],
+// Level *I* / *1* is the entry rung — must NOT be caught by the II-IV/2-9
+// senior suffix, or every genuinely junior "Engineer I" title gets rejected.
+['Software Test Engineer I', 'tech'],
+['Refrigeration Engineer I', 'tech'],
 ];
 for (const [title, industry] of junior) {
-  check(`junior: ${title}`, classify(job(title), industry).isJunior, true);
+check(`junior: ${title}`, classify(job(title), industry).isJunior, true);
 }
 
 console.log('years');
@@ -88,40 +88,40 @@ check('unstated', classify(job('Engineer', 'no numbers here'), 'tech').minYears,
 
 console.log('excluded role types');
 const excluded = [
-  'Part Time Associate Banker',
-  'Cloud Data Platform Sales',
-  'Data Center Technician',
-  'IT Support Associate',
-  // Industrial/pharma GCC titles that slipped through because the `swe` family
-  // bare-matches \bengineer\b and `data` bare-matches \bscientist\b — real leaks
-  // from Baker Hughes, GE Vernova, Amazon and Thermo Fisher on 2026-08-11.
-  'Services Professional - Field Service Engineer',
-  'Reliability & Maintenance Engineer',
-  'RME Engineer',
-  'Engineer - Electrical Plant Layout & Cable Trays',
-  'Engineer - Plant Layout & Piping',
-  'Junior Fire Protection Engineer I',
-  'Refrigeration Engineer I',
-  'Process Engineer - Mechanical',
-  'Application Scientist Pharma and Biopharma',
-  'Field Applications Scientist',
-  'Scientist I - Protein Biology',
-  'Data Entry Specialist',
+'Part Time Associate Banker',
+'Cloud Data Platform Sales',
+'Data Center Technician',
+'IT Support Associate',
+// Industrial/pharma GCC titles that slipped through because the `swe` family
+// bare-matches \bengineer\b and `data` bare-matches \bscientist\b — real leaks
+// from Baker Hughes, GE Vernova, Amazon and Thermo Fisher on 2026-08-11.
+'Services Professional - Field Service Engineer',
+'Reliability & Maintenance Engineer',
+'RME Engineer',
+'Engineer - Electrical Plant Layout & Cable Trays',
+'Engineer - Plant Layout & Piping',
+'Junior Fire Protection Engineer I',
+'Refrigeration Engineer I',
+'Process Engineer - Mechanical',
+'Application Scientist Pharma and Biopharma',
+'Field Applications Scientist',
+'Scientist I - Protein Biology',
+'Data Entry Specialist',
 ];
 for (const title of excluded) {
-  check(`excluded: ${title}`, classify(job(title), 'tech').excluded, true);
+check(`excluded: ${title}`, classify(job(title), 'tech').excluded, true);
 }
 
 // Legitimate tech roles from the same GCC boards must survive the new
 // exclusions — this is what stops the exclude list from being too broad.
 const notExcluded = [
-  'Site Reliability Engineer',
-  'QA Automation Engineer',
-  'Data Scientist, Applied ML',
-  'Application Engineer, Platform',
+'Site Reliability Engineer',
+'QA Automation Engineer',
+'Data Scientist, Applied ML',
+'Application Engineer, Platform',
 ];
 for (const title of notExcluded) {
-  check(`not excluded: ${title}`, classify(job(title), 'tech').excluded, false);
+check(`not excluded: ${title}`, classify(job(title), 'tech').excluded, false);
 }
 
 console.log('role families');
@@ -129,14 +129,39 @@ check('finance family off at tech firms', roleFamily('Associate, Operations', 't
 check('finance family on at banks', roleFamily('Asset Servicing Analyst', 'banking'), 'finance');
 check('swe family', roleFamily('Backend Engineer', 'tech'), 'swe');
 
+// 830 of 1,969 India roles across the 12 highest-volume boards were being
+// dropped for having no family at all. Each of these is a category that was
+// invisible until measured — not a hypothetical.
+check('spelled-out QA, which \\bqa\\b never matched', roleFamily('Executive - Digital Quality Assurance', 'tech'), 'swe');
+check('silicon roles at the semiconductor GCCs', roleFamily('Physical Design Engineer', 'tech'), 'swe');
+check('embedded/firmware', roleFamily('Firmware Developer', 'tech'), 'swe');
+// "Advisory" appeared 235 times in the dropped set — KPMG and PwC label
+// nearly every engagement with it.
+check('consulting advisory work', roleFamily('Executive - TPRM-Advisory Services', 'consulting'), 'finance');
+check('product family', roleFamily('Associate Product Manager', 'tech'), 'product');
+check('design family', roleFamily('Product Designer', 'tech'), 'design');
+check('security family', roleFamily('Cyber Defense Analyst', 'tech'), 'security');
+// Widening a family must not promote the senior rungs: `manager` is still a
+// senior term everywhere, so the family only makes the role visible.
+check('product family does not smuggle in managers', classify(job('Product Manager'), 'tech').isJunior, false);
+
+// Back-office roles reached the inbox through the finance family's junior
+// "Analyst"/"Executive" titles. "Analyst - Employee Vetting & Background
+// checks" was posted ~10 times in a single KPMG sweep.
+check('HR vetting ops excluded', classify(job('Analyst - Employee Vetting & Background checks'), 'consulting').excluded, true);
+check('admin roles excluded', classify(job('Analyst - Executive Assistant'), 'consulting').excluded, true);
+check('finance back-office excluded', classify(job('Executive - Accounts Payable, Finance'), 'consulting').excluded, true);
+// The carve-outs above must not take real engineering with them.
+check('real consulting engineering still kept', classify(job('Consultant - Gen AI'), 'consulting').excluded, false);
+
 console.log('dedup normalization');
 // Cigna posted the same requisition twice — one title used a plain hyphen,
 // the other an en-dash in "HIH – Evernorth" — so an exact-string dedup key
 // treated them as two different roles.
 check(
-  'hyphen and en-dash collapse to the same key',
-  normalizeForDedup('Software Engineering Associate Advisor - HIH – Evernorth'),
-  normalizeForDedup('Software Engineering Associate Advisor – HIH - Evernorth'),
+'hyphen and en-dash collapse to the same key',
+normalizeForDedup('Software Engineering Associate Advisor - HIH – Evernorth'),
+normalizeForDedup('Software Engineering Associate Advisor – HIH - Evernorth'),
 );
 check('genuinely different titles stay different', normalizeForDedup('Backend Engineer') === normalizeForDedup('Frontend Engineer'), false);
 
