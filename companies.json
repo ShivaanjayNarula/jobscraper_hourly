@@ -6124,8 +6124,7 @@
     "host": "wd3",
     "site": "1",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "heidelbergmaterials",
@@ -6154,7 +6153,8 @@
     "host": "wd3",
     "site": "GSKCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "kantar",
@@ -6182,7 +6182,8 @@
     "host": "wd3",
     "site": "Career_JE",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "maersk",
@@ -6191,8 +6192,7 @@
     "host": "wd3",
     "site": "APMT_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "mars",
@@ -6201,7 +6201,8 @@
     "host": "wd3",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "murex",
@@ -8190,7 +8191,8 @@
     "host": "wd5",
     "site": "Primary-External-1",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "geaerospace",
@@ -8255,7 +8257,8 @@
     "host": "wd5",
     "site": "Guardian_Pharmacy",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "healthcatalyst",
@@ -8293,7 +8296,8 @@
     "host": "wd5",
     "site": "HexcelCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "pushpay",
@@ -8540,7 +8544,8 @@
     "host": "wd5",
     "site": "lu_job_board_faculty",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "liveramp",
@@ -8549,7 +8554,8 @@
     "host": "wd5",
     "site": "LiveRampCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "kyndryl",
@@ -8558,7 +8564,8 @@
     "host": "wd5",
     "site": "KyndrylEarlyCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "lifestance",
@@ -8577,7 +8584,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T05:06:43.660Z"
   },
   {
     "name": "lnw",
