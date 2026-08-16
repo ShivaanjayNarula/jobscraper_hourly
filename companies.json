@@ -28449,5 +28449,12 @@
     "industry": "tech",
     "source": "discovered",
     "token": "zyngacareers"
+  },
+  {
+    "name": "vettoai",
+    "ats": "greenhouse",
+    "token": "vettoai",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
