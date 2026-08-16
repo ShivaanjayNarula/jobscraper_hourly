@@ -13,8 +13,9 @@
     "probe": "tsx src/probe.ts",
     "detect": "tsx src/detect.ts",
     "import": "tsx src/import-urls.ts",
+    "bulk-import": "tsx src/bulk-import.ts",
     "debug": "tsx src/debug.ts",
-    "debug": "tsx src/discover-news.ts"
+    "discover-news": "tsx src/discover-news.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
