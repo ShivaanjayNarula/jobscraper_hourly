@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-16T11:37:04.792Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -8233,8 +8232,7 @@
     "host": "wd5",
     "site": "Careers_GM",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T11:37:04.792Z"
+    "source": "discovered"
   },
   {
     "name": "guardianpharmacy",
@@ -8589,8 +8587,7 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T11:37:04.792Z"
+    "source": "discovered"
   },
   {
     "name": "magellanhealth",
@@ -8599,8 +8596,7 @@
     "host": "wd5",
     "site": "magellan_health_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T11:37:04.792Z"
+    "source": "discovered"
   },
   {
     "name": "lowes",
@@ -8609,8 +8605,7 @@
     "host": "wd5",
     "site": "lws_external_cs",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "meredith",
@@ -9197,8 +9192,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T11:37:04.792Z"
+    "source": "discovered"
   },
   {
     "name": "redhat",
@@ -9207,8 +9201,7 @@
     "host": "wd5",
     "site": "jobs",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "rocket",
@@ -9217,8 +9210,7 @@
     "host": "wd5",
     "site": "rocket_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T11:37:04.792Z"
+    "source": "discovered"
   },
   {
     "name": "republic",
@@ -9227,8 +9219,7 @@
     "host": "wd5",
     "site": "Republic",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "quickenloans",
@@ -9237,8 +9228,7 @@
     "host": "wd5",
     "site": "rocket_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T16:07:45.568Z"
+    "source": "discovered"
   },
   {
     "name": "surefirecyber",
@@ -9555,8 +9545,7 @@
     "host": "wd5",
     "site": "taylormadegolf",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T11:37:04.792Z"
+    "source": "discovered"
   },
   {
     "name": "tempus",
@@ -9565,8 +9554,7 @@
     "host": "wd5",
     "site": "Tempus_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T07:00:33.301Z"
+    "source": "discovered"
   },
   {
     "name": "thermofisher",
@@ -9575,8 +9563,7 @@
     "host": "wd5",
     "site": "ThermoFisherCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "thehartford",
@@ -9585,8 +9572,7 @@
     "host": "wd5",
     "site": "careers_external",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "tollgroup",
@@ -9595,8 +9581,7 @@
     "host": "wd5",
     "site": "TollGroup",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "townepark",
@@ -9605,8 +9590,7 @@
     "host": "wd5",
     "site": "ext",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "transunion",
@@ -9615,8 +9599,7 @@
     "host": "wd5",
     "site": "TransUnion",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "unisys",
@@ -9625,8 +9608,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "wexinc",
@@ -9635,8 +9617,7 @@
     "host": "wd5",
     "site": "WEXInc",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T17:14:20.922Z"
+    "source": "discovered"
   },
   {
     "name": "vanguard",
@@ -9645,8 +9626,7 @@
     "host": "wd5",
     "site": "vanguard_external",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-14T16:07:45.568Z"
+    "source": "discovered"
   },
   {
     "name": "viatris",
@@ -9655,8 +9635,7 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T13:01:17.502Z"
+    "source": "discovered"
   },
   {
     "name": "torcrobotics",
@@ -9928,8 +9907,7 @@
     "host": "wd5",
     "site": "Zoom",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T19:37:58.049Z"
+    "source": "discovered"
   },
   {
     "name": "modmed",
@@ -9947,8 +9925,7 @@
     "host": "wd5",
     "site": "ZOLLMedicalCorp",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-15T19:37:58.049Z"
+    "source": "discovered"
   },
   {
     "name": "wri",
