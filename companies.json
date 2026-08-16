@@ -1706,8 +1706,7 @@
     "ats": "greenhouse",
     "token": "axicorpfinancialservicesptyltd",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "axios",
@@ -5832,8 +5831,7 @@
     "host": "wd3",
     "site": "dyson_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "greenworkssunriseglobalmarketing",
@@ -6136,8 +6134,7 @@
     "host": "wd3",
     "site": "Global_HM_Career_Site",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "harman",
@@ -6166,8 +6163,7 @@
     "host": "wd3",
     "site": "KANTAR",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "icon",
@@ -6206,8 +6202,7 @@
     "host": "wd3",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T08:48:59.979Z"
+    "source": "discovered"
   },
   {
     "name": "murex",
@@ -6693,8 +6688,7 @@
     "host": "wd3",
     "site": "Nutreco_External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T08:48:59.979Z"
+    "source": "discovered"
   },
   {
     "name": "jensenhughes",
@@ -8605,8 +8599,7 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "magellanhealth",
@@ -8615,8 +8608,7 @@
     "host": "wd5",
     "site": "magellan_health_careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "lowes",
@@ -9204,8 +9196,7 @@
     "host": "wd5",
     "site": "Qualifacts_External_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "qualys",
@@ -9214,8 +9205,7 @@
     "host": "wd5",
     "site": "Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "redhat",
@@ -9571,8 +9561,7 @@
     "host": "wd5",
     "site": "taylormadegolf",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T09:45:31.502Z"
+    "source": "discovered"
   },
   {
     "name": "tempus",
