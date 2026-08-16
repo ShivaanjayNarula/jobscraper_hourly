@@ -6141,8 +6141,7 @@
     "host": "wd3",
     "site": "harman",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "gsknch",
@@ -6151,8 +6150,7 @@
     "host": "wd3",
     "site": "GSKCareers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T05:06:43.660Z"
+    "source": "discovered"
   },
   {
     "name": "kantar",
@@ -6170,8 +6168,7 @@
     "host": "wd3",
     "site": "broadbean_external",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "johnsonelectric",
@@ -6198,8 +6195,7 @@
     "host": "wd3",
     "site": "External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T05:06:43.660Z"
+    "source": "discovered"
   },
   {
     "name": "murex",
@@ -6226,8 +6222,7 @@
     "host": "wd3",
     "site": "PlanseeGroup_Career",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "michelinhr",
@@ -6236,8 +6231,7 @@
     "host": "wd3",
     "site": "Michelin",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "novartis",
@@ -6246,8 +6240,7 @@
     "host": "wd3",
     "site": "Novartis_Careers",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "iconcareers",
@@ -6683,8 +6676,7 @@
     "host": "wd3",
     "site": "Nutreco_External",
     "industry": "tech",
-    "source": "discovered",
-    "failingSince": "2026-08-16T04:52:22.219Z"
+    "source": "discovered"
   },
   {
     "name": "jensenhughes",
@@ -8554,7 +8546,8 @@
     "host": "wd5",
     "site": "KyndrylEarlyCareers",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T07:47:25.779Z"
   },
   {
     "name": "lifestance",
@@ -8573,7 +8566,8 @@
     "host": "wd5",
     "site": "External",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T07:47:25.779Z"
   },
   {
     "name": "lnw",
