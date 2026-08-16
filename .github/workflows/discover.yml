@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - run: npm install --no-audit --no-fund
 
@@ -30,3 +30,42 @@ jobs:
         with:
           commit_message: 'discover: new boards from Common Crawl [skip ci]'
           file_pattern: companies.json state/discover-cursor.json
+
+  # Re-validates every untracked tenant in ats-scrapers' published lists. This
+  # runs weekly rather than once because the *re-check* is the point, and it
+  # answers two questions a one-off import cannot:
+  #
+  #   1. "Which companies just announced India?" A board that had zero India
+  #      roles last week and has them today gets promoted the week it opens the
+  #      office — which is exactly the Target case that prompted this.
+  #   2. "Which companies just got funded?" Adopting an ATS is what a company
+  #      does right after it raises and starts hiring, so new tenants appearing
+  #      in the crawl are a decent proxy for fresh funding — and unlike
+  #      scraping funding announcements, this only ever surfaces companies that
+  #      are provably hiring right now.
+  #
+  # Deliberately a separate job: it is long, and a failure here must not cost
+  # the Common Crawl cursor above.
+  bulk-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install --no-audit --no-fund
+
+      # `india` rather than `fresher`: a board with senior-only India roles today
+      # is a company with an India office, and it will post junior roles
+      # eventually. `live` would add ~13,000 boards that have never shown an
+      # India role at all, which is runtime spent to learn nothing.
+      - run: npm run bulk-import -- --bar india
+
+      - name: Commit imported boards
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'bulk-import: new boards from ats-scrapers tenant lists [skip ci]'
+          file_pattern: companies.json
