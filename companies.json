@@ -314,7 +314,8 @@
     "token": "jpmc",
     "siteNumber": "CX_1001",
     "industry": "banking",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-16T18:05:10.075Z"
   },
   {
     "name": "Amazon",
@@ -1377,7 +1378,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-16T18:05:10.075Z"
   },
   {
     "name": "2k",
@@ -10194,7 +10196,8 @@
     "token": "qualcomm.eightfold.ai",
     "site": "qualcomm.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-16T18:05:10.075Z"
   },
   {
     "name": "SAP",
