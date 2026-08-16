@@ -314,8 +314,7 @@
     "token": "jpmc",
     "siteNumber": "CX_1001",
     "industry": "banking",
-    "source": "curated",
-    "failingSince": "2026-08-16T18:05:10.075Z"
+    "source": "curated"
   },
   {
     "name": "Amazon",
@@ -1378,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-16T18:05:10.075Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -8589,7 +8587,8 @@
     "host": "wd5",
     "site": "Logitech",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-16T18:48:24.786Z"
   },
   {
     "name": "magellanhealth",
@@ -10196,8 +10195,7 @@
     "token": "qualcomm.eightfold.ai",
     "site": "qualcomm.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-16T18:05:10.075Z"
+    "source": "curated"
   },
   {
     "name": "SAP",
@@ -16881,7 +16879,8 @@
     "source": "discovered",
     "token": "fis",
     "host": "wd5",
-    "site": "searchjobs"
+    "site": "searchjobs",
+    "failingSince": "2026-08-16T18:48:24.786Z"
   },
   {
     "name": "Five9",
