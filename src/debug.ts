@@ -15,7 +15,6 @@ console.log(`${company.name}: ${jobs.length} postings`);
 const local = jobs.filter((job) => locationMatches(job.location));
 console.log(`${local.length} pass the location filter\n`);
 
-for (const job of local.slice(0, 25)) {
 /**
  * Every location-passing role, not a slice. A 25-row cap here once hid 58 of
  * Target's 83 India roles — including the fact that 48 of them were being
@@ -25,17 +24,14 @@ for (const job of local.slice(0, 25)) {
 const tally: Record<string, number> = {};
 
 for (const job of local) {
-const c = classify(job, company.industry);
-const verdict = shouldAlert(job, company, c);
-const family = roleFamily(job.title, company.industry) ?? 'no family';
+  const c = classify(job, company.industry);
+  const verdict = shouldAlert(job, company, c);
+  const family = roleFamily(job.title, company.industry) ?? 'no family';
   const reason = verdict.keep ? 'kept' : (verdict.reason ?? 'unknown');
   tally[reason] = (tally[reason] ?? 0) + 1;
-console.log(
-    `${verdict.keep ? '+' : '-'} ${job.title.slice(0, 52).padEnd(54)} ${family.padEnd(9)} ${
-      verdict.reason ?? 'kept'
-    }`,
+  console.log(
     `${verdict.keep ? '+' : '-'} ${job.title.slice(0, 52).padEnd(54)} ${family.padEnd(9)} ${reason}`,
-);
+  );
 }
 
 console.log(
