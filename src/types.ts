@@ -41,6 +41,16 @@ export interface Company {
   source?: 'curated' | 'discovered';
   /** ISO date of the first failure in the current streak; cleared on success. */
   failingSince?: string;
+  /**
+   * ISO date this board last returned at least one India/remote role. Its
+   * presence is what makes a board "hot" — polled every run. Boards that have
+   * never shown one are swept on rotation instead (see `selectBoards`), which
+   * is what lets the corpus hold tens of thousands of boards without the run
+   * time growing with it.
+   */
+  lastIndiaAt?: string;
+  /** ISO date this board was last polled at all. Drives the cold rotation. */
+  lastPolledAt?: string;
 }
 
 export interface RawJob {
