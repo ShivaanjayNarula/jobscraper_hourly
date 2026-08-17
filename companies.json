@@ -1377,7 +1377,8 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-17T09:03:36.827Z"
   },
   {
     "name": "2k",
@@ -17385,8 +17386,7 @@
     "source": "discovered",
     "token": "geisinger",
     "host": "wd5",
-    "site": "geisingerexternal",
-    "failingSince": "2026-08-17T07:18:33.880Z"
+    "site": "geisingerexternal"
   },
   {
     "name": "Gen Digital Inc.",
