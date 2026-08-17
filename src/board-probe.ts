@@ -43,7 +43,11 @@ export interface Candidate {
   name?: string;
 }
 
-export async function probeSlug(candidate: Candidate, known: Set<string>): Promise<Hit | null> {
+export async function probeSlug(
+  candidate: Candidate,
+  known: Set<string>,
+  source: Company['source'] = 'curated',
+): Promise<Hit | null> {
   for (const token of variants(candidate.slug)) {
     for (const ats of HOSTED) {
       if (known.has(`${ats}:${token}`)) return null;
@@ -52,7 +56,7 @@ export async function probeSlug(candidate: Candidate, known: Set<string>): Promi
         ats,
         token,
         industry: candidate.industry,
-        source: 'curated',
+        source,
       };
       try {
         const jobs = await FETCHERS[ats].list(company);
