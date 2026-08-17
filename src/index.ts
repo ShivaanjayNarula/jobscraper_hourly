@@ -3,11 +3,13 @@ import type { Company, Job, RawJob } from './types.js';
 import { FETCHERS } from './fetchers/index.js';
 import { mapLimit, mapLimitByKey } from './fetchers/util.js';
 import { classify } from './classify.js';
-import { isFreshEnough, normalizeForDedup, preScreen, shouldAlert } from './filter.js';
+import { isFreshEnough, locationMatches, normalizeForDedup, preScreen, shouldAlert } from './filter.js';
 import { renderEmail, subject } from './email.js';
 import { updateCatalog } from './catalog.js';
 import { CONCURRENCY, DROP_AFTER_FAILING_DAYS, HOST_CONCURRENCY } from './config.js';
 import { loadCompanies, loadSeen, readJson, recordFailure, recordSuccess, saveCompanies, saveSeen } from './state.js';
+import { detectOutage } from './outage.js';
+import { selectBoards } from './select-boards.js';
 
 const nowIso = new Date().toISOString();
 const dryRun = process.env.DRY_RUN === '1';
@@ -88,10 +90,23 @@ async function main(): Promise<void> {
     }
   }
 
-  console.log(`polling ${companies.length} boards`);
-  const results = await mapLimitByKey(companies, rateLimitKey, limitForHost, pollBoard);
+  const selection = selectBoards(companies);
+  console.log(
+    `polling ${selection.polling.length} of ${companies.length} boards ` +
+      `(${selection.hot} hot, ${selection.cold} cold on rotation, ${selection.skipped} waiting)`,
+  );
+  const results = await mapLimitByKey(selection.polling, rateLimitKey, limitForHost, pollBoard);
 
-  const updatedCompanies: Company[] = [];
+  /**
+   * Boards not polled this run must survive untouched. `updatedCompanies` is
+   * what gets written back over companies.json, so anything missing from it is
+   * silently deleted — and with rotation most of the corpus is missing from
+   * any single run.
+   */
+  const polledTokens = new Set(selection.polling.map((c) => `${c.ats}:${c.token}`));
+  const updatedCompanies: Company[] = companies.filter(
+    (c) => !polledTokens.has(`${c.ats}:${c.token}`),
+  );
   const dropped: string[] = [];
   const fresh: { company: Company; job: RawJob }[] = [];
   const liveIds = new Set<string>();
@@ -99,17 +114,38 @@ async function main(): Promise<void> {
   let totalSeen = 0;
   let screened = 0;
 
+  const suspectedOutage = detectOutage(results.map((r) => ({ ats: r.company.ats, error: r.error })));
+  if (suspectedOutage.size > 0) {
+    console.warn(
+      `suspected platform-wide outage this run, not evicting boards on: ${[...suspectedOutage].join(', ')}`,
+    );
+  }
+
   for (const { company, jobs, error } of results) {
     if (error) {
       const failed = recordFailure(company, nowIso);
       const days = (Date.now() - new Date(failed.failingSince!).getTime()) / 86_400_000;
       console.warn(`  ! ${company.name}: ${error}`);
-      if (days >= DROP_AFTER_FAILING_DAYS) dropped.push(company.name);
-      else updatedCompanies.push(failed);
+      if (days >= DROP_AFTER_FAILING_DAYS && !suspectedOutage.has(company.ats)) {
+        dropped.push(company.name);
+      } else {
+        updatedCompanies.push(failed);
+      }
       continue;
     }
 
-    updatedCompanies.push(recordSuccess(company));
+    /**
+     * `lastIndiaAt` is sticky once set — a board that showed an India role
+     * last month but has none open today stays hot. Expiring it would demote
+     * exactly the companies most worth watching, since a board sits empty in
+     * the gap between one req closing and the next opening.
+     */
+    const hasIndia = jobs.some((job) => locationMatches(job.location));
+    updatedCompanies.push({
+      ...recordSuccess(company),
+      lastPolledAt: nowIso,
+      ...(hasIndia || company.lastIndiaAt ? { lastIndiaAt: hasIndia ? nowIso : company.lastIndiaAt } : {}),
+    });
     totalSeen += jobs.length;
     polledBoards.add(`${company.ats}:${company.token}`);
 
