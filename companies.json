@@ -5901,14 +5901,16 @@
     "ats": "greenhouse",
     "token": "hanwharenewables",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-17T13:09:09.806Z"
   },
   {
     "name": "hanwhaenergyusa",
     "ats": "greenhouse",
     "token": "hanwhaenergyusa",
     "industry": "tech",
-    "source": "discovered"
+    "source": "discovered",
+    "failingSince": "2026-08-17T13:09:09.806Z"
   },
   {
     "name": "headlandsresearch",
@@ -11788,7 +11790,8 @@
     "source": "discovered",
     "token": "flowserve",
     "host": "wd1",
-    "site": "applied"
+    "site": "applied",
+    "failingSince": "2026-08-17T13:09:09.806Z"
   },
   {
     "name": "Applied Materials",
@@ -19523,8 +19526,7 @@
     "source": "discovered",
     "token": "kansashealthsystem",
     "host": "wd1",
-    "site": "careers",
-    "failingSince": "2026-08-17T10:49:50.982Z"
+    "site": "careers"
   },
   {
     "name": "KarmaCheck",
