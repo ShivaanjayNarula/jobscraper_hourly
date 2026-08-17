@@ -1377,8 +1377,7 @@
     "token": "apply.careers.microsoft.com",
     "site": "microsoft.com",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-17T09:03:36.827Z"
+    "source": "curated"
   },
   {
     "name": "2k",
@@ -19524,7 +19523,8 @@
     "source": "discovered",
     "token": "kansashealthsystem",
     "host": "wd1",
-    "site": "careers"
+    "site": "careers",
+    "failingSince": "2026-08-17T10:49:50.982Z"
   },
   {
     "name": "KarmaCheck",
