@@ -17085,7 +17085,8 @@
     "ats": "greenhouse",
     "industry": "tech",
     "source": "discovered",
-    "token": "formbio"
+    "token": "formbio",
+    "failingSince": "2026-08-17T07:18:33.880Z"
   },
   {
     "name": "FormativGroup",
@@ -17384,7 +17385,8 @@
     "source": "discovered",
     "token": "geisinger",
     "host": "wd5",
-    "site": "geisingerexternal"
+    "site": "geisingerexternal",
+    "failingSince": "2026-08-17T07:18:33.880Z"
   },
   {
     "name": "Gen Digital Inc.",
