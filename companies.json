@@ -833,8 +833,7 @@
     "host": "wd1",
     "site": "External_Rockwell_Automation",
     "industry": "tech",
-    "source": "curated",
-    "failingSince": "2026-08-17T03:14:46.838Z"
+    "source": "curated"
   },
   {
     "name": "Airliquide",
@@ -11597,8 +11596,7 @@
     "source": "discovered",
     "token": "analogdevices",
     "host": "wd1",
-    "site": "external",
-    "failingSince": "2026-08-17T03:14:46.838Z"
+    "site": "external"
   },
   {
     "name": "Analysys Mason",
@@ -11790,8 +11788,7 @@
     "source": "discovered",
     "token": "flowserve",
     "host": "wd1",
-    "site": "applied",
-    "failingSince": "2026-08-17T03:14:46.838Z"
+    "site": "applied"
   },
   {
     "name": "Applied Materials",
