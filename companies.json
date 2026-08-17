@@ -557,7 +557,8 @@
     "host": "wd1",
     "site": "External",
     "industry": "tech",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-17T14:47:57.061Z"
   },
   {
     "name": "Western Digital",
@@ -643,7 +644,8 @@
     "host": "wd1",
     "site": "Global",
     "industry": "banking",
-    "source": "curated"
+    "source": "curated",
+    "failingSince": "2026-08-17T14:47:57.061Z"
   },
   {
     "name": "LSEG",
@@ -11790,8 +11792,7 @@
     "source": "discovered",
     "token": "flowserve",
     "host": "wd1",
-    "site": "applied",
-    "failingSince": "2026-08-17T13:09:09.806Z"
+    "site": "applied"
   },
   {
     "name": "Applied Materials",
