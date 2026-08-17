@@ -19522,8 +19522,7 @@
     "source": "discovered",
     "token": "kansashealthsystem",
     "host": "wd1",
-    "site": "careers",
-    "failingSince": "2026-08-16T22:40:26.846Z"
+    "site": "careers"
   },
   {
     "name": "KarmaCheck",
@@ -20554,7 +20553,8 @@
     "source": "discovered",
     "token": "marvell",
     "host": "wd1",
-    "site": "marvellcareers"
+    "site": "marvellcareers",
+    "failingSince": "2026-08-17T01:57:09.243Z"
   },
   {
     "name": "Mary Free Bed Rehabilitation Hospital",
@@ -20620,8 +20620,7 @@
     "source": "discovered",
     "token": "mastercard",
     "host": "wd1",
-    "site": "corporatecareers",
-    "failingSince": "2026-08-16T22:40:26.846Z"
+    "site": "corporatecareers"
   },
   {
     "name": "Match Group",
