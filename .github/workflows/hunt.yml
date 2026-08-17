@@ -2,15 +2,24 @@ name: hunt
 
 on:
   schedule:
-    # :17 rather than :00 — the top of the hour is when GitHub's scheduler queue
-    # is most congested and runs get delayed the longest.
+    # Every 20 minutes, and that is NOT because the job needs to run that often
+    # — it is because GitHub's scheduler is best-effort and silently drops runs.
     #
-    # Every 2 hours rather than hourly: the board count is growing past 3,000, and
-    # a run that overlaps the next one wastes a runner and races the same cache
-    # key. Nothing is lost by halving the cadence — postings do not expire in an
-    # hour, and the corpus is saturated, so a run's yield is set by how many roles
-    # were posted since the last one, not by how often we look.
-    - cron: '17 */2 * * *'
+    # Measured over 30 consecutive runs on an hourly ('17 * * * *') schedule:
+    # median gap 58 min, but 9 of 29 gaps exceeded 70 min and the worst was
+    # 274 min. A cron asking for hourly delivered a 4.5-hour hole. Actual job
+    # runtime was 4-8 min throughout, so this was never a capacity problem —
+    # the schedule simply did not fire.
+    #
+    # Asking every 20 min means a dropped run costs 20 min instead of an hour,
+    # and two consecutive drops still land inside the 1-hour freshness target.
+    # Overlap is handled by the `concurrency` block below (queues, never
+    # cancels), and public-repo Actions minutes are free, so the only real cost
+    # is more 'board list update' commits.
+    #
+    # Before lengthening this again: check real run durations first. The last
+    # schedule change was made on an unmeasured hunch and had to be reverted.
+    - cron: '*/20 * * * *'
   workflow_dispatch:
     inputs:
       test_email:
@@ -90,9 +99,29 @@ jobs:
           subject: '[jobs] ${{ steps.hunt.outputs.subject }}'
           html_body: file://out/email.html
 
+      # The runner checked out `main` at queue time, so any push landing during
+      # the run leaves it behind and the commit below is rejected. That is not
+      # hypothetical: it failed twice, and because a failed step skips the rest
+      # of the job it also took the catalog publish with it.
+      - name: Rebase onto any commits that landed mid-run
+        if: '!inputs.test_email'
+        continue-on-error: true
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull --rebase --autostash origin main
+
       # companies.json is hand-curated, so its history is worth keeping on main.
+      #
+      # continue-on-error because this is bookkeeping, not the product: losing
+      # one board-list commit costs nothing (the next run rewrites the same
+      # state), while failing the job here skips "Publish catalog" and leaves
+      # the data branch stale. It matters more since boards became tiered —
+      # `lastPolledAt` lives in this file, and if it never persists the cold
+      # rotation freezes on the same slice and never reaches the rest.
       - name: Commit board list
         if: '!inputs.test_email'
+        continue-on-error: true
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'companies: board list update [skip ci]'
