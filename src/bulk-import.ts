@@ -5,6 +5,7 @@ import { HOST_CONCURRENCY } from './config.js';
 import { locationMatches, roleFamily } from './filter.js';
 import { classify } from './classify.js';
 import { loadCompanies, saveCompanies } from './state.js';
+import { WORKDAY } from './board-url.js';
 
 /**
  * Bulk-imports boards from kalil0321/ats-scrapers' published tenant lists.
@@ -26,8 +27,6 @@ const RAW = 'https://raw.githubusercontent.com/kalil0321/ats-scrapers/main/ats-c
 /** Platforms whose CSV row carries everything the fetcher needs. */
 const IMPORTABLE: Ats[] = ['greenhouse', 'lever', 'ashby', 'smartrecruiters', 'workday', 'oracle'];
 
-const WORKDAY_URL =
-  /https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[A-Za-z]{2}\/)?([A-Za-z0-9_-]+)/i;
 const ORACLE_URL =
   /https?:\/\/([a-z0-9-]+)\.(fa\.[a-z0-9]+)\.oraclecloud\.com\/.*?\/sites\/([A-Za-z0-9_]+)/i;
 
@@ -50,7 +49,7 @@ function parseRow(platform: Ats, line: string): Company | null {
   const base = { name, ats: platform, industry: 'tech' as Industry, source: 'discovered' as const };
 
   if (platform === 'workday') {
-    const m = WORKDAY_URL.exec(url ?? '');
+    const m = WORKDAY.exec(url ?? '');
     return m ? { ...base, token: m[1]!, host: m[2]!, site: m[3]! } : null;
   }
   if (platform === 'oracle') {
