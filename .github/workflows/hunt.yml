@@ -124,11 +124,18 @@ jobs:
       # `outage_started`/`outage_recovered` only fire on the actual transition.
       - name: Report suspected ATS outage
         if: "!inputs.test_email && (steps.hunt.outputs.outage_started != '' || steps.hunt.outputs.outage_recovered == '1')"
+        # Issue reporting is informative; a missing label or transient GitHub
+        # API failure must not prevent the catalogue from being published.
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STARTED: ${{ steps.hunt.outputs.outage_started }}
           RECOVERED: ${{ steps.hunt.outputs.outage_recovered }}
         run: |
+          # Fresh repositories only have GitHub's default labels. Create the
+          # label this workflow depends on before attempting to use it.
+          gh label create outage --repo "$GITHUB_REPOSITORY" --color B60205 \
+            --description "Suspected ATS platform outage" --force
           if [ -n "$STARTED" ]; then
             for ats in ${STARTED//,/ }; do
               existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label outage --state open \
