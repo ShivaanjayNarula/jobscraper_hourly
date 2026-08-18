@@ -32,6 +32,19 @@ jobs:
       - id: discover-news
         run: npm run discover-news
 
+      # This run's own companies.json write is local and uncommitted at this
+      # point, and hunt.yml pushes board-list updates on almost every
+      # 20-minute run — a real chance to collide, since this job's own budget
+      # is up to 30 minutes. hunt.yml hit exactly this race twice before
+      # adding the same fix; --autostash carries this run's uncommitted
+      # write through the rebase rather than losing it.
+      - name: Rebase onto any commits that landed mid-run
+        continue-on-error: true
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull --rebase --autostash origin main
+
       # Most days this changes nothing — a run that finds no new board with an
       # India role is the normal outcome, not a failure. git-auto-commit is a
       # no-op when the file is unchanged.
