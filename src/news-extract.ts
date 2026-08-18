@@ -35,9 +35,6 @@ export const STOPWORDS = new Set([
   'india', 'indian', 'indias', 'us', 'usa', 'uk', 'china', 'europe', 'asia', 'global',
   'startup', 'startups', 'unicorn', 'fintech', 'edtech', 'ipo', 'sebi', 'rbi', 'gst',
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
-  'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
-  'september', 'october', 'november', 'december',
-  'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 'oct', 'nov', 'dec',
   'ai', 'saas', 'b2b', 'd2c', 'ev', 'evs', 'crypto', 'web3', 'funding', 'revenue', 'profit',
   'loss', 'yoy', 'cr', 'mn', 'bn',
   // Funding-verb leakage in title-case headlines.
@@ -68,10 +65,21 @@ export const TRAILING_ONLY = new Set([
  * first word of a real company ("Deep Industries", "Seven Seas", "Home
  * Depot", "Cleaning Solutions"), so they must not lead-trim multi-word
  * names — only suppress a candidate that is exactly that one word.
+ *
+ * Month names belong here, not in STOPWORDS: a bare "In August, X raised..."
+ * needs "August" filtered as its own stray candidate, but STOPWORDS' leading
+ * trim ran unconditionally and was eating the front of any real company that
+ * starts with a month name — "August Health raises $10 Mn" extracted as just
+ * "Health", "May Mobility raises..." as just "Mobility", both real company
+ * names, both a stray-orphan-generic-word collision waiting to happen (the
+ * same class as the "LEAP" incident this file already documents).
  */
 export const LONE_ONLY = new Set([
   'home', 'deep', 'every', 'seven', 'investors', 'tribunal', 'million', 'billion',
   'wsj', 'drhp', 'udrhp', 'rhp', 'ofs', 'esop', 'flags', 'trump',
+  'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+  'september', 'october', 'november', 'december',
+  'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 'oct', 'nov', 'dec',
 ]);
 
 
