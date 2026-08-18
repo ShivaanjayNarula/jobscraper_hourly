@@ -112998,5 +112998,61 @@
     "token": "velaura",
     "industry": "tech",
     "source": "discovered"
+  },
+  {
+    "name": "1pyra)mid_health&care",
+    "ats": "greenhouse",
+    "token": "1pyra)mid_health&care",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "adaptive-innovations",
+    "ats": "ashby",
+    "token": "adaptive-innovations",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "alphalifesci",
+    "ats": "ashby",
+    "token": "alphalifesci",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "andotechnologies",
+    "ats": "ashby",
+    "token": "andotechnologies",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "APEXX",
+    "ats": "ashby",
+    "token": "APEXX",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "asteriai",
+    "ats": "ashby",
+    "token": "asteriai",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "atomic-invest",
+    "ats": "ashby",
+    "token": "atomic-invest",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Atolio",
+    "ats": "ashby",
+    "token": "Atolio",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
