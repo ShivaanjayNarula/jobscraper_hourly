@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
-import type { Ats, Company, Industry } from './types.js';
+import type { Company, Industry } from './types.js';
 import { FETCHERS } from './fetchers/index.js';
 import { mapLimit } from './fetchers/util.js';
 import { locationMatches } from './filter.js';
 import { loadCompanies, saveCompanies } from './state.js';
+import { HOSTED as SUPPORTED, WORKDAY } from './board-url.js';
 
 /**
  * Resolves a company's careers page to its actual ATS board.
@@ -18,14 +19,6 @@ import { loadCompanies, saveCompanies } from './state.js';
  */
 const CAREER_PATHS = ['/careers', '/careers/', '/jobs', '/jobs/', '/company/careers', '/about/careers'];
 
-/** Platforms we can read. Order matters only for readability. */
-const SUPPORTED: { ats: Ats; pattern: RegExp }[] = [
-  { ats: 'greenhouse', pattern: /(?:job-boards|boards)(?:\.eu)?\.greenhouse\.io\/(?:embed\/job_board\?for=)?([a-z0-9_-]+)/i },
-  { ats: 'lever', pattern: /jobs\.(?:eu\.)?lever\.co\/([a-z0-9_-]+)/i },
-  { ats: 'ashby', pattern: /jobs\.ashbyhq\.com\/([a-z0-9_-]+)/i },
-  { ats: 'smartrecruiters', pattern: /(?:jobs|careers)\.smartrecruiters\.com\/([a-z0-9_-]+)/i },
-];
-
 /**
  * Platforms this file can't resolve to a ready-to-add `Company` automatically
  * — either because there's genuinely no adapter yet, or because the adapter
@@ -35,8 +28,6 @@ const SUPPORTED: { ats: Ats; pattern: RegExp }[] = [
  */
 const NO_ADAPTER = /keka\.com|icims\.com/i;
 const NEEDS_MANUAL_EXTRACTION = /darwinbox\.[a-z]+|turbohire\.co|successfactors\.[a-z]+|phenompeople\.com/i;
-
-const WORKDAY = /https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:([a-z]{2}-[A-Za-z]{2})\/)?([A-Za-z0-9_-]+)/i;
 
 async function fetchText(url: string): Promise<string> {
   try {
@@ -70,7 +61,7 @@ async function detect(domain: string, industry: Industry): Promise<Detection> {
 
     const workday = WORKDAY.exec(html);
     if (workday) {
-      const [, token, host, , site] = workday;
+      const [, token, host, site] = workday;
       return {
         domain,
         company: { name: nameFromDomain(domain), ats: 'workday', token: token!, host, site, industry, source: 'curated' },
