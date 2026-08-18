@@ -1,6 +1,7 @@
 import type { Ats, Company, Industry } from './types.js';
 import { FETCHERS } from './fetchers/index.js';
 import { locationMatches } from './filter.js';
+import { prettify } from './board-url.js';
 
 /**
  * Shared slug-probing used by both `npm run probe` (a file of candidates) and
@@ -15,14 +16,6 @@ import { locationMatches } from './filter.js';
  * importing from it would execute the CLI as a side effect.
  */
 export const HOSTED: Ats[] = ['greenhouse', 'lever', 'ashby', 'smartrecruiters'];
-
-/** Board tokens are lowercase slugs; company names shouldn't inherit that. */
-export function prettify(slug: string): string {
-  return slug
-    .split(/[\s-]+/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 /** "urban company" -> urbancompany, urban-company. Boards use both conventions. */
 export function variants(slug: string): string[] {
