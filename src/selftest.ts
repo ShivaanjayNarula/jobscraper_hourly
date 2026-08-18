@@ -1,8 +1,10 @@
 import { classify } from './classify.js';
 import { isFreshEnough, locationMatches, normalizeForDedup, roleFamily } from './filter.js';
 import { extractNames, FUNDING, INVESTORS, LONE_ONLY, TRAILING_ONLY } from './news-extract.js';
-import { detectOutage } from './outage.js';
+import { detectOutage, outageChanges } from './outage.js';
 import { selectBoards } from './select-boards.js';
+import { epochToIso } from './fetchers/eightfold.js';
+import { safeIso } from './fetchers/darwinbox.js';
 import type { Company, Industry, RawJob } from './types.js';
 
 /**
@@ -222,6 +224,53 @@ check(
   'darwinbox,turbohire',
 );
 
+// outageChanges is what the workflow reports from — a 20-minute schedule
+// means a single multi-hour outage gets flagged by detectOutage dozens of
+// times, so the workflow-facing signal must fire only on actual transitions.
+check(
+  'a platform newly joining the suspected set is reported as started',
+  outageChanges({}, new Set(['darwinbox'])).started.join(','),
+  'darwinbox',
+);
+check(
+  'a platform still suspected from last run is not reported again',
+  outageChanges({ darwinbox: true }, new Set(['darwinbox'])).started.join(','),
+  '',
+);
+check(
+  'clearing the entire suspected set is reported as recovered',
+  outageChanges({ darwinbox: true }, new Set()).recovered,
+  true,
+);
+check(
+  'no prior outage and none now is not a recovery',
+  outageChanges({}, new Set()).recovered,
+  false,
+);
+
+console.log('epoch conversion (eightfold)');
+// Same bug class Zappyhire shipped: an ATS's own sort/rank field can hold a
+// sentinel value with no real date behind it, far outside JS Date's valid
+// range — `new Date()` throws RangeError rather than returning something
+// falsy, so it has to be caught before construction, not after.
+check('a normal unix-seconds timestamp converts to ISO', epochToIso(1_700_000_000) !== undefined, true);
+check('undefined stays undefined', epochToIso(undefined), undefined);
+check('zero (falsy) stays undefined, not epoch-zero', epochToIso(0), undefined);
+check(
+  'a sentinel far outside Date range is dropped, not thrown',
+  epochToIso(-9_223_372_036_854_776),
+  undefined,
+);
+
+console.log('date parsing (darwinbox)');
+// created_on arrives as either a string or a number depending on tenant, and
+// either shape can fail to parse into a real date.
+check('a real ISO string parses', safeIso('2026-01-15T10:00:00Z') !== undefined, true);
+check('a real epoch-ms number parses', safeIso(1_700_000_000_000) !== undefined, true);
+check('a garbled string is dropped, not thrown', safeIso('not a date'), undefined);
+check('an out-of-range number is dropped, not thrown', safeIso(-9_223_372_036_854_776_000), undefined);
+check('undefined stays undefined', safeIso(undefined), undefined);
+
 console.log('board selection');
 // Rotation is what lets the corpus hold ~21,000 boards without the run time
 // growing with it. The failure modes here are silent: a hot board demoted to
@@ -338,6 +387,15 @@ check('lone-only words do not lead-trim real multi-word names (Cleaning Solution
 check('lone-only words do not lead-trim real multi-word names (Home Depot)', extractNames('Home Depot opens India sourcing office').includes('Home Depot'), true);
 check('trailing-only words do not lead-trim real multi-word names (Expand)', extractNames('Expand Corp raises Series B').join(','), 'Expand Corp');
 check('the sets exist and are disjoint from STOPWORDS', LONE_ONLY.has('deep') && TRAILING_ONLY.has('emerges') && !LONE_ONLY.has('the'), true);
+
+// Third audit pass (2026-08-19): month names lived in STOPWORDS, whose
+// leading-trim runs unconditionally — so any real company starting with a
+// month name got the front chopped off. Moved to LONE_ONLY, same as every
+// other "junk alone, real word in a real name" case.
+check('a month-named company survives whole (August Health)', extractNames('August Health raises $10 Mn in seed round').join(','), 'August Health');
+check('a month-named company survives whole (May Mobility)', extractNames('May Mobility raises $50 Mn in Series C').join(','), 'May Mobility');
+check('a bare month mention extracts nothing', extractNames('August raises $10 Mn seed round').join(','), '');
+check('a month used as a date reference is still dropped, not attached', extractNames('In August, Zetwerk raised $5 Mn seed funding').join(','), 'Zetwerk');
 
 console.log(failures === 0 ? '\nall checks pass' : `\n${failures} failing check(s)`);
 process.exit(failures === 0 ? 0 : 1);
