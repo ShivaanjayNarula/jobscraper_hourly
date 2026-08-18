@@ -6,7 +6,7 @@ import type { Ats, Company, Industry } from './types.js';
  * Shared by `detect` (which finds URLs on careers pages) and `import` (which
  * takes them from a list), so the parsing rules live in exactly one place.
  */
-const HOSTED: { ats: Ats; pattern: RegExp }[] = [
+export const HOSTED: { ats: Ats; pattern: RegExp }[] = [
   {
     ats: 'greenhouse',
     pattern:
@@ -17,7 +17,7 @@ const HOSTED: { ats: Ats; pattern: RegExp }[] = [
   { ats: 'smartrecruiters', pattern: /(?:jobs|careers)\.smartrecruiters\.com\/([a-zA-Z0-9_-]+)/i },
 ];
 
-const WORKDAY =
+export const WORKDAY =
   /https?:\/\/([a-z0-9-]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:(?:[a-z]{2}-[A-Za-z]{2})\/)?([A-Za-z0-9_-]+)/i;
 
 /** Oracle tenants sit on regional pods: `{tenant}.fa.{pod}.oraclecloud.com`. */
@@ -28,7 +28,7 @@ const ORACLE =
 const NOT_A_COMPANY =
   /^(embed|api|v1|assets|static|images|css|js|robots|sitemap|favicon|_next|search|jobs|job)$/i;
 
-function prettify(slug: string): string {
+export function prettify(slug: string): string {
   return slug
     .split(/[\s_-]+/)
     .filter(Boolean)
