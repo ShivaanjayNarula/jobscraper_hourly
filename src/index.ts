@@ -7,8 +7,18 @@ import { isFreshEnough, locationMatches, normalizeForDedup, preScreen, shouldAle
 import { renderEmail, subject } from './email.js';
 import { updateCatalog } from './catalog.js';
 import { CONCURRENCY, DROP_AFTER_FAILING_DAYS, HOST_CONCURRENCY } from './config.js';
-import { loadCompanies, loadSeen, readJson, recordFailure, recordSuccess, saveCompanies, saveSeen } from './state.js';
-import { detectOutage } from './outage.js';
+import {
+  loadCompanies,
+  loadOutageState,
+  loadSeen,
+  readJson,
+  recordFailure,
+  recordSuccess,
+  saveCompanies,
+  saveOutageState,
+  saveSeen,
+} from './state.js';
+import { detectOutage, outageChanges, outageStateFrom } from './outage.js';
 import { selectBoards } from './select-boards.js';
 
 const nowIso = new Date().toISOString();
@@ -73,6 +83,7 @@ async function enrich(company: Company, job: RawJob): Promise<RawJob> {
 async function main(): Promise<void> {
   const companies = await loadCompanies();
   const seen = await loadSeen();
+  const previousOutage = await loadOutageState();
 
   /**
    * The seen state lives in the Actions cache, not in git — at ~150,000 live
@@ -120,6 +131,9 @@ async function main(): Promise<void> {
       `suspected platform-wide outage this run, not evicting boards on: ${[...suspectedOutage].join(', ')}`,
     );
   }
+  const outageDelta = outageChanges(previousOutage, suspectedOutage);
+  if (outageDelta.started.length) console.warn(`newly suspected outage: ${outageDelta.started.join(', ')}`);
+  if (outageDelta.recovered) console.log('previously suspected outage has cleared');
 
   for (const { company, jobs, error } of results) {
     if (error) {
@@ -229,6 +243,7 @@ async function main(): Promise<void> {
     await saveCompanies(updatedCompanies);
     const prunedCount = await saveSeen(seen);
     if (prunedCount) console.log(`pruned ${prunedCount} expired IDs`);
+    await saveOutageState(outageStateFrom(suspectedOutage));
   }
 
   await mkdir('out', { recursive: true });
@@ -273,7 +288,10 @@ async function main(): Promise<void> {
   if (output) {
     await appendFile(
       output,
-      `new_count=${wroteEmail ? deduped.length : 0}\nsubject=${subject(freshForEmail, staleForEmail)}\nhour=${new Date().getUTCHours()}\n`,
+      `new_count=${wroteEmail ? deduped.length : 0}\nsubject=${subject(freshForEmail, staleForEmail)}\n` +
+        `hour=${new Date().getUTCHours()}\n` +
+        `outage_started=${outageDelta.started.join(',')}\n` +
+        `outage_recovered=${outageDelta.recovered ? '1' : ''}\n`,
     );
   }
 }
