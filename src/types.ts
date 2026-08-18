@@ -12,7 +12,19 @@ export type Ats =
   | 'workday'
   | 'oracle'
   | 'amazon'
-  | 'successfactors';
+  | 'successfactors'
+  | 'trakstar'
+  | 'icims'
+  | 'workable'
+  | 'zohorecruit'
+  | 'keka'
+  | 'freshteam'
+  | 'recruiterflow'
+  | 'greythr'
+  | 'peoplestrong'
+  | 'pyjamahr'
+  | 'zappyhire'
+  | 'zimyo';
 
 /**
  * Industry drives which seniority vocabulary applies. This is not cosmetic:
@@ -24,10 +36,15 @@ export type Industry = 'tech' | 'fintech' | 'quant' | 'banking' | 'consulting';
 export interface Company {
   name: string;
   ats: Ats;
-  /** Greenhouse/Lever/Ashby board token, Workday tenant, Oracle host prefix. */
+  /**
+   * Greenhouse/Lever/Ashby/Workable/Trakstar/Keka/Freshteam/Recruiterflow
+   * board token or tenant subdomain, Workday tenant, Oracle host prefix.
+   * iCIMS and Zoho Recruit hold the full board URL/host instead, since
+   * neither has one predictable subdomain pattern.
+   */
   token: string;
   industry: Industry;
-  /** Workday only: the site path, e.g. "External_Career_Site". */
+  /** Workday: the site path, e.g. "External_Career_Site". Keka: the portalName (usually omitted, defaults to "default"). */
   site?: string;
   /**
    * Workday: the wdN host, e.g. "wd5". SuccessFactors legacy only: the
