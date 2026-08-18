@@ -29,6 +29,21 @@ const PAGE_SIZE = 50;
 const MAX_PAGES = 12;
 
 /**
+ * `created_on` is typed `string | number` because the API sends both across
+ * tenants, and either shape can fail to parse — a garbled string or an
+ * out-of-range epoch number both make `new Date(...).toISOString()` throw
+ * `RangeError: Invalid time value` instead of returning something falsy.
+ * Same failure class as Eightfold/Zappyhire's epoch sentinels: a single bad
+ * value would otherwise make this one company look permanently dead instead
+ * of just missing a posted date.
+ */
+export function safeIso(value: string | number | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+/**
  * Darwinbox — the HR suite behind a lot of large Indian employers.
  *
  *   token -> tenant subdomain, e.g. "pwhr"  (NOT the company name; PhysicsWallah
@@ -138,7 +153,7 @@ export async function list(company: Company): Promise<RawJob[]> {
         url: company.site
           ? `https://${company.token}.darwinbox.in/ms/candidatev2/${company.site}/careers/jobDetails/${job.id}`
           : `https://${company.token}.darwinbox.in/ms/candidate/careers/jobdetail/${job.id}`,
-        postedAt: job.created_on ? new Date(job.created_on).toISOString() : undefined,
+        postedAt: safeIso(job.created_on),
         salary: money(job.salary_range),
         text: toPlainText(
           [
