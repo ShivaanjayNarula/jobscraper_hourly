@@ -112991,5 +112991,12 @@
     "source": "discovered",
     "token": "juro",
     "lastPolledAt": "2026-08-18T19:22:35.030Z"
+  },
+  {
+    "name": "Velaura",
+    "ats": "lever",
+    "token": "velaura",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
