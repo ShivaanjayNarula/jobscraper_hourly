@@ -1,10 +1,12 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type { Company, SeenState } from './types.js';
+import type { OutageState } from './outage.js';
 import { SEEN_RETENTION_DAYS } from './config.js';
 
 const SEEN_PATH = 'state/seen.json';
 const COMPANIES_PATH = 'companies.json';
+const OUTAGE_PATH = 'state/outage.json';
 
 export async function readJson<T>(path: string, fallback: T): Promise<T> {
   try {
@@ -22,6 +24,10 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 export const loadSeen = () => readJson<SeenState>(SEEN_PATH, {});
 export const loadCompanies = () => readJson<Company[]>(COMPANIES_PATH, []);
 export const saveCompanies = (c: Company[]) => writeJson(COMPANIES_PATH, c);
+
+/** Tiny — one boolean per ATS — so it rides in the same cache as seen.json. */
+export const loadOutageState = () => readJson<OutageState>(OUTAGE_PATH, {});
+export const saveOutageState = (state: OutageState) => writeJson(OUTAGE_PATH, state);
 
 /**
  * Pruning is what keeps this viable without a database. Git stores a full blob
