@@ -15,7 +15,8 @@
     "import": "tsx src/import-urls.ts",
     "bulk-import": "tsx src/bulk-import.ts",
     "debug": "tsx src/debug.ts",
-    "discover-news": "tsx src/discover-news.ts"
+    "discover-news": "tsx src/discover-news.ts",
+    "query": "tsx src/query.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
