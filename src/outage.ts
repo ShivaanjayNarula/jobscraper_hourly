@@ -43,3 +43,27 @@ export function detectOutage(
   }
   return suspected;
 }
+
+/** Which platforms were under suspected outage as of the previous run. */
+export type OutageState = Partial<Record<Ats, true>>;
+
+export function outageStateFrom(suspected: ReadonlySet<Ats>): OutageState {
+  return Object.fromEntries([...suspected].map((ats) => [ats, true]));
+}
+
+/**
+ * `detectOutage` re-flags every affected platform on every run for as long as
+ * the outage lasts, and this runs every 20 minutes — reporting that verdict
+ * unconditionally would open or comment on an issue dozens of times over one
+ * multi-hour outage. Diff against last run's state instead, so the workflow
+ * only has something to say when a platform newly joins the suspected set, or
+ * when the whole thing clears.
+ */
+export function outageChanges(
+  previous: OutageState,
+  current: ReadonlySet<Ats>,
+): { started: Ats[]; recovered: boolean } {
+  const started = [...current].filter((ats) => !previous[ats]);
+  const recovered = current.size === 0 && Object.keys(previous).length > 0;
+  return { started, recovered };
+}
