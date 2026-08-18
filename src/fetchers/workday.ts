@@ -1,88 +1,68 @@
 import type { Company, RawJob } from '../types.js';
 import { getJson, toPlainText, UA } from './util.js';
 
-interface WdPosting {
-  title: string;
-  externalPath: string;
-  locationsText?: string;
-  postedOn?: string;
-  bulletFields?: string[];
+interface WorkableLocation {
+  country?: string;
+  countryCode?: string;
+  city?: string;
+  region?: string;
 }
 
-const PAGE_SIZE = 20; // Workday caps `limit` at 20 regardless of what you ask for.
-const MAX_PAGES = 15; // ~300 newest roles per board; see note below.
-
-function base(company: Company): string {
-  return `https://${company.token}.${company.host}.myworkdayjobs.com`;
+interface WorkableJob {
+  title: string;
+  shortcode: string;
+  url?: string;
+  application_url?: string;
+  published_on?: string;
+  country?: string;
+  city?: string;
+  state?: string;
+  locations?: WorkableLocation[];
 }
 
 /**
- * Workday's list view returns relative dates ("Posted Today") and no absolute
- * timestamp — which is fine, because we detect new roles by requisition ID, not
- * by date. Results come back newest-first, so capping pages is safe for alerting
- * even though it means we never enumerate the full back catalogue.
+ * Workable — a widely-used SMB/startup ATS (1,805 of 8,265 companies in a
+ * separate open dataset run on it, by far the biggest single platform
+ * there). `token` is the account slug from the board URL,
+ * e.g. "rentokil-initial" in apply.workable.com/rentokil-initial.
+ *
+ * The widget API returns every job in one call, no pagination, no auth —
+ * but it carries no description, so that's an `enrich()` fetch against the
+ * server-rendered job page instead.
  */
 export async function list(company: Company): Promise<RawJob[]> {
-  // Results come back newest-first across the whole company, so at a large US
-  // employer the India roles can sit well beyond the page cap. Running an
-  // explicit "India" search alongside the unfiltered sweep surfaces them for a
-  // handful of extra requests.
-  const [recent, india] = await Promise.all([search(company, ''), search(company, 'India')]);
-
-  const byId = new Map(recent.map((job) => [job.externalId, job]));
-  for (const job of india) byId.set(job.externalId, job);
-  return [...byId.values()];
-}
-
-async function search(company: Company, searchText: string): Promise<RawJob[]> {
-  const endpoint = `${base(company)}/wday/cxs/${company.token}/${company.site}/jobs`;
-  const jobs: RawJob[] = [];
-
-  // Workday reports the real total only on the first request — every later page
-  // comes back with `"total": 0` while still returning results. Trusting it per
-  // page silently caps every board at 40 jobs.
-  let total = 0;
-
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const data = await getJson<{ total?: number; jobPostings?: WdPosting[] }>(endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ limit: PAGE_SIZE, offset: page * PAGE_SIZE, searchText }),
-    });
-
-    if (page === 0) total = data.total ?? 0;
-
-    const postings = data.jobPostings ?? [];
-    if (postings.length === 0) break;
-
-    for (const p of postings) {
-      jobs.push({
-        externalId: p.bulletFields?.[0] ?? p.externalPath,
-        title: p.title,
-        location: p.locationsText ?? '',
-        url: `${base(company)}/en-US/${company.site}${p.externalPath}`,
-        postedAt: p.postedOn,
-      });
-    }
-
-    // A short page is the reliable end-of-results signal; `total` is only a
-    // shortcut for boards small enough to finish early.
-    if (postings.length < PAGE_SIZE) break;
-    if (total > 0 && (page + 1) * PAGE_SIZE >= total) break;
-  }
-
-  return jobs;
-}
-
-export async function enrich(company: Company, job: RawJob): Promise<string | undefined> {
-  const path = job.url.split(`/${company.site}`)[1];
-  if (!path) return undefined;
-  const res = await fetch(
-    `${base(company)}/wday/cxs/${company.token}/${company.site}/job${path}`,
-    { headers: { 'user-agent': UA, accept: 'application/json' }, signal: AbortSignal.timeout(30_000) },
+  const data = await getJson<{ jobs?: WorkableJob[] }>(
+    `https://apply.workable.com/api/v1/widget/accounts/${company.token}`,
   );
+
+  return (data.jobs ?? []).map((job) => {
+    const locations = job.locations ?? [];
+    const location =
+      locations
+        .map((l) => [l.city, l.region, l.country].filter(Boolean).join(', '))
+        .join(' · ') || [job.city, job.state, job.country].filter(Boolean).join(', ');
+
+    return {
+      externalId: job.shortcode,
+      title: job.title,
+      location,
+      url: job.url ?? `https://apply.workable.com/j/${job.shortcode}`,
+      postedAt: job.published_on,
+    };
+  });
+}
+
+/** The widget API has no per-job JSON endpoint — description lives only on the rendered job page. */
+export async function enrich(company: Company, job: RawJob): Promise<string | undefined> {
+  const res = await fetch(`https://apply.workable.com/${company.token}/j/${job.externalId}`, {
+    headers: { 'user-agent': UA, accept: 'text/html' },
+    signal: AbortSignal.timeout(30_000),
+  });
   if (!res.ok) return undefined;
-  const data = (await res.json()) as { jobPostingInfo?: { jobDescription?: string } };
-  const html = data.jobPostingInfo?.jobDescription;
-  return html ? toPlainText(html) : undefined;
+
+  const html = await res.text();
+  const withoutScripts = html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ');
+  return toPlainText(withoutScripts).slice(0, 6000);
 }
