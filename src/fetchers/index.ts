@@ -13,6 +13,18 @@ import * as darwinbox from './darwinbox.js';
 import * as turbohire from './turbohire.js';
 import * as rendered from './rendered.js';
 import * as successfactors from './successfactors.js';
+import * as trakstar from './trakstar.js';
+import * as icims from './icims.js';
+import * as workable from './workable.js';
+import * as zohorecruit from './zohorecruit.js';
+import * as keka from './keka.js';
+import * as freshteam from './freshteam.js';
+import * as recruiterflow from './recruiterflow.js';
+import * as greythr from './greythr.js';
+import * as peoplestrong from './peoplestrong.js';
+import * as pyjamahr from './pyjamahr.js';
+import * as zappyhire from './zappyhire.js';
+import * as zimyo from './zimyo.js';
 
 export interface Fetcher {
   list(company: Company): Promise<RawJob[]>;
@@ -35,4 +47,16 @@ export const FETCHERS: Record<Ats, Fetcher> = {
   turbohire,
   rendered,
   successfactors,
+  trakstar,
+  icims,
+  workable,
+  zohorecruit,
+  keka,
+  freshteam,
+  recruiterflow,
+  greythr,
+  peoplestrong,
+  pyjamahr,
+  zappyhire,
+  zimyo,
 };
