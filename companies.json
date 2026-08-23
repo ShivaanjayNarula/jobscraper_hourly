@@ -112956,5 +112956,105 @@
     "source": "discovered",
     "token": "durin",
     "lastPolledAt": "2026-08-23T04:55:55.007Z"
+  },
+  {
+    "name": "cowbellcyber",
+    "ats": "greenhouse",
+    "token": "cowbellcyber",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "acutechgroupinc",
+    "ats": "greenhouse",
+    "token": "acutechgroupinc",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "adswerveinc",
+    "ats": "greenhouse",
+    "token": "adswerveinc",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "affirmedrxpbc",
+    "ats": "greenhouse",
+    "token": "affirmedrxpbc",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "bayesianhealth",
+    "ats": "ashby",
+    "token": "bayesianhealth",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "bookkeeper360",
+    "ats": "ashby",
+    "token": "bookkeeper360",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "brooklyn-health",
+    "ats": "ashby",
+    "token": "brooklyn-health",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "built-robotics",
+    "ats": "ashby",
+    "token": "built-robotics",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "chartis",
+    "ats": "ashby",
+    "token": "chartis",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "cerebras",
+    "ats": "ashby",
+    "token": "cerebras",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "ciroos",
+    "ats": "ashby",
+    "token": "ciroos",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "clickhouse",
+    "ats": "ashby",
+    "token": "clickhouse",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "compound",
+    "ats": "ashby",
+    "token": "compound",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "caci",
+    "ats": "workday",
+    "token": "caci",
+    "host": "wd1",
+    "site": "External",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
