@@ -19,7 +19,7 @@ on:
     #
     # Before lengthening this again: check real run durations first. The last
     # schedule change was made on an unmeasured hunch and had to be reverted.
-    - cron: '*/20 * * * *'
+    - cron: '7,27,47 * * * *'
   workflow_dispatch:
     inputs:
       test_email:
