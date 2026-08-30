@@ -112970,5 +112970,54 @@
     "source": "discovered",
     "token": "delfina",
     "lastPolledAt": "2026-08-30T07:31:59.562Z"
+  },
+  {
+    "name": "bloxstaking",
+    "ats": "greenhouse",
+    "token": "bloxstaking",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "buzzfeed",
+    "ats": "greenhouse",
+    "token": "buzzfeed",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "datavations",
+    "ats": "greenhouse",
+    "token": "datavations",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "dremio",
+    "ats": "greenhouse",
+    "token": "dremio",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "forcefactor",
+    "ats": "greenhouse",
+    "token": "forcefactor",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "apexit",
+    "ats": "greenhouse",
+    "token": "apexit",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "ascenttechnologies",
+    "ats": "greenhouse",
+    "token": "ascenttechnologies",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
