@@ -4,6 +4,12 @@ import { EMAIL_DETAIL_LIMIT } from './config.js';
 /** One-liners shown before the backlog section collapses to "+N more". */
 const BACKLOG_DISPLAY_LIMIT = 30;
 
+export interface RampingEmployer {
+  company: string;
+  open: number;
+  newLast30: number;
+}
+
 const escape = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -34,7 +40,13 @@ function freshness(job: Job): string | undefined {
 }
 
 function card(job: Job): string {
-  const meta = [job.location, experienceLabel(job), freshness(job), job.salary]
+  const salary = job.salaryMin
+    ? `₹${fmtLpa(job.salaryMin)}${job.salaryMax && job.salaryMax !== job.salaryMin ? `–${fmtLpa(job.salaryMax)}` : ''} LPA`
+    : undefined;
+  const flags = [job.isRepost && 'reposted', job.visa && 'visa sponsorship']
+    .filter((v): v is string => Boolean(v));
+  const mode = job.workMode === 'remote' ? 'Remote' : job.workMode === 'hybrid' ? 'Hybrid' : undefined;
+  const meta = [job.location, experienceLabel(job), freshness(job), salary, mode, ...flags]
     .filter((value): value is string => Boolean(value))
     .map(escape);
   return `
@@ -70,6 +82,8 @@ function section(title: string, jobs: Job[], detailBudget: number): string {
         : ''
     }`;
 }
+
+const fmtLpa = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 /**
  * "New" means new to this tracker, not newly posted (see EMAIL_FRESHNESS_DAYS
@@ -113,7 +127,25 @@ export function subject(fresh: Job[], stale: Job[] = []): string {
  * permanently, because they're already written to seen.json and will never
  * alert again.
  */
-export function renderEmail(fresh: Job[], stale: Job[] = []): string {
+/**
+ * Phase D: aggregate signal no single posting carries. A company whose
+ * catalogue share is climbing is ramping hiring — worth a look even when each
+ * individual role is old news. Rendered as a quiet strip above the footer;
+ * absent entirely when nothing qualifies, never a filler row.
+ */
+function rampingSection(employers: RampingEmployer[]): string {
+  if (employers.length === 0) return '';
+  const items = employers
+    .map((e) => `${escape(e.company)} (${e.newLast30} new of ${e.open} open)`)
+    .join(' &middot; ');
+  return `
+    <tr><td style="padding-top:26px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#666;">
+      Ramping — hiring fastest right now
+    </td></tr>
+    <tr><td style="padding-top:6px;font-size:13px;color:#444;">${items}</td></tr>`;
+}
+
+export function renderEmail(fresh: Job[], stale: Job[] = [], ramping: RampingEmployer[] = []): string {
   const tech = fresh.filter((j) => TECH_INDUSTRIES.has(j.industry));
   const finance = fresh.filter((j) => !TECH_INDUSTRIES.has(j.industry));
 
@@ -135,6 +167,7 @@ export function renderEmail(fresh: Job[], stale: Job[] = []): string {
         ${section('Tech · Data · ML', tech, techBudget)}
         ${section('Finance · Consulting · Quant', finance, EMAIL_DETAIL_LIMIT - techBudget)}
         ${backlogSection(stale)}
+        ${rampingSection(ramping)}
         <tr><td style="padding-top:26px;font-size:11px;color:#aaa;border-top:1px solid #eee;">
           jobscraper-next &middot; tune filters in <code>src/config.ts</code>
         </td></tr>
