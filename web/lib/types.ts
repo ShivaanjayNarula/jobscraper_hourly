@@ -9,6 +9,10 @@ export interface Job {
   url: string;
   postedAt?: string;
   salary?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  workMode?: 'remote' | 'hybrid' | 'onsite';
+  visa?: boolean;
   minYears: number | null;
   maxYears: number | null;
   isIntern: boolean;
