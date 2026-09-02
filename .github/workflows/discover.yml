@@ -47,10 +47,27 @@ jobs:
   # Deliberately a separate job: it is long, and a failure here must not cost
   # the Common Crawl cursor above.
   bulk-import:
+    # Sequenced after `discover`, not parallel with it: both jobs commit and
+    # push companies.json, and running them concurrently means whichever job
+    # pushes second gets a non-fast-forward rejection against the ref the
+    # first one just moved — this is why bulk-import kept failing with
+    # "failed to push some refs" every other week. `if: always()` keeps the
+    # original independence (bulk-import still runs even if discover fails);
+    # only the git ordering changed.
+    needs: discover
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+
+      # `needs: discover` only orders job *start*; actions/checkout's fetch can
+      # still land inside GitHub's replication window right after discover's
+      # own push and miss it — this run hit that exact 2-second gap, checked
+      # out the pre-discover tip, and lost the push at the end with a
+      # non-fast-forward rejection. An explicit pull closes the window for
+      # good regardless of timing.
+      - run: git pull origin main
 
       - uses: actions/setup-node@v4
         with:
