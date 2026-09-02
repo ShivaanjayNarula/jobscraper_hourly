@@ -23,6 +23,11 @@ export interface CatalogEntry {
   url: string;
   postedAt?: string;
   salary?: string;
+  /** Normalized ₹ LPA band from src/salary.ts — drives the UI's salary facet. */
+  salaryMin?: number;
+  salaryMax?: number;
+  workMode?: 'remote' | 'hybrid' | 'onsite';
+  visa?: boolean;
   minYears: number | null;
   maxYears: number | null;
   isIntern: boolean;
@@ -42,6 +47,13 @@ function slim(job: Job): Omit<CatalogEntry, 'firstSeen' | 'lastSeen'> {
     url: job.url,
     postedAt: job.postedAt,
     salary: job.salary,
+    // A few bytes per entry; the web UI facets on all three. `isRepost` is
+    // deliberately excluded — it is an alert-time judgment, not a property of
+    // the posting, and it would go stale in the catalogue.
+    salaryMin: job.salaryMin,
+    salaryMax: job.salaryMax,
+    workMode: job.workMode ?? undefined,
+    visa: job.visa || undefined,
     minYears: job.minYears,
     maxYears: job.maxYears,
     isIntern: job.isIntern,
