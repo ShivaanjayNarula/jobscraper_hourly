@@ -13,9 +13,7 @@ import * as darwinbox from './darwinbox.js';
 import * as turbohire from './turbohire.js';
 import * as rendered from './rendered.js';
 import * as successfactors from './successfactors.js';
-// The ATS is named "trakstar", but the adapter file is `trackstar.ts`.
-// Linux GitHub Actions runners use a case- and spelling-sensitive filesystem.
-import * as trakstar from './trackstar.js';
+import * as trakstar from './trakstar.js';
 import * as icims from './icims.js';
 import * as workable from './workable.js';
 import * as zohorecruit from './zohorecruit.js';
