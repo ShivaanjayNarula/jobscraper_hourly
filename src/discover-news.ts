@@ -3,7 +3,7 @@ import type { Candidate, Hit } from './board-probe.js';
 import { probeSlug } from './board-probe.js';
 import { mapLimit, UA } from './fetchers/util.js';
 import { isServiceCompany } from './filter.js';
-import { extractNames, headlines, FUNDING, INDIA_EXPANSION } from './news-extract.js';
+import { extractNames, headlineItems, FUNDING, INDIA_EXPANSION } from './news-extract.js';
 import { loadCompanies, saveCompanies } from './state.js';
 
 /**
@@ -55,11 +55,17 @@ const escape = (s: string) =>
  * list ("this company just raised money, go find their HR contact"), not a
  * claim that every name here has a real job board.
  */
-function renderDigest(names: string[]): string {
-  const rows = names.map((n) => `<li style="margin:4px 0;">${escape(n)}</li>`).join('\n');
+function renderDigest(entries: { name: string; source?: string }[]): string {
+  const rows = entries
+    .map(({ name, source }) =>
+      source
+        ? `<li style="margin:4px 0;">${escape(name)} — <a href="${escape(source)}">source</a></li>`
+        : `<li style="margin:4px 0;">${escape(name)} <span style="color:#999;">(source link unavailable)</span></li>`,
+    )
+    .join('\n');
   return `<!doctype html><html><body style="font-family:sans-serif;">
-<h2>${names.length} company names from today's funding/India-expansion news</h2>
-<p style="color:#666;">Unverified — pulled straight from headlines, not checked against any job board. Some entries are extraction noise, not real companies.</p>
+<h2>${entries.length} company names from today's funding/India-expansion news</h2>
+<p style="color:#666;">Unverified — pulled straight from headlines, not checked against any job board. Some entries are extraction noise, not real companies. Each links back to the article it was pulled from so you can check it yourself.</p>
 <ul>${rows}</ul>
 </body></html>`;
 }
@@ -71,21 +77,29 @@ async function main(): Promise<void> {
 
   const feeds = await mapLimit(FEEDS, 6, fetchFeed);
   const live = feeds.filter(Boolean).length;
+  const dead = FEEDS.filter((_, i) => !feeds[i]);
 
-  const relevant: string[] = [];
+  const relevant: { title: string; link: string }[] = [];
   for (const xml of feeds) {
-    for (const title of headlines(xml)) {
-      if (FUNDING.test(title) || INDIA_EXPANSION.test(title)) relevant.push(title);
+    for (const item of headlineItems(xml)) {
+      if (FUNDING.test(item.title) || INDIA_EXPANSION.test(item.title)) relevant.push(item);
     }
   }
   console.log(`${live}/${FEEDS.length} feeds reachable, ${relevant.length} funding/expansion headlines`);
+  if (dead.length > 0) console.log(`  unreachable: ${dead.join(', ')}`);
 
   const candidates = new Map<string, Candidate>();
-  for (const title of relevant) {
+  // First headline to produce a given name wins its link — a name pulled from
+  // two different articles keeps pointing at whichever one you'd actually
+  // want to check first, and this only exists so the digest below can be
+  // verified by clicking through, not to pick the "best" source.
+  const candidateSources = new Map<string, string>();
+  for (const { title, link } of relevant) {
     for (const name of extractNames(title)) {
       const key = name.toLowerCase().replace(/[^a-z0-9]/g, '');
       if (!key || knownNames.has(key) || candidates.has(key)) continue;
       candidates.set(key, { slug: name, name, industry: 'tech' });
+      if (link) candidateSources.set(key, link);
     }
   }
   console.log(`${candidates.size} candidate names not already tracked`);
@@ -138,7 +152,11 @@ async function main(): Promise<void> {
   const wroteDigest = candidates.size > 0;
   if (wroteDigest) {
     await mkdir('out', { recursive: true });
-    await writeFile('out/discover-news.html', renderDigest([...candidates.values()].map((c) => c.name ?? c.slug)), 'utf8');
+    const entries = [...candidates.entries()].map(([key, c]) => ({
+      name: c.name ?? c.slug,
+      source: candidateSources.get(key),
+    }));
+    await writeFile('out/discover-news.html', renderDigest(entries), 'utf8');
   }
 
   const output = process.env.GITHUB_OUTPUT;
