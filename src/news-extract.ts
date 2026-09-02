@@ -133,10 +133,31 @@ export function decode(s: string): string {
     .trim();
 }
 
-export function headlines(xml: string): string[] {
-  return (xml.match(/<title>[\s\S]*?<\/title>/g) ?? [])
-    .map((t) => decode(t.replace(/<\/?title>/g, '')))
-    .filter((t) => t.length > 15 && t.length < 200);
+export interface HeadlineItem {
+  title: string;
+  /** The article's own URL — empty if this item's <link> was missing or empty. */
+  link: string;
+}
+
+/**
+ * Extracts each RSS <item>'s title and link together, so a discovered
+ * candidate name can be traced back to the specific article it came from.
+ * (An earlier version, `headlines()`, returned bare titles with no link;
+ * replaced outright rather than kept alongside once nothing else called it —
+ * the digest this feeds was unverifiable without the source, which is
+ * exactly the complaint that prompted this.)
+ */
+export function headlineItems(xml: string): HeadlineItem[] {
+  const items: HeadlineItem[] = [];
+  for (const block of xml.match(/<item\b[\s\S]*?<\/item>/g) ?? []) {
+    const titleMatch = /<title>([\s\S]*?)<\/title>/.exec(block);
+    if (!titleMatch) continue;
+    const title = decode(titleMatch[1]!);
+    if (title.length <= 15 || title.length >= 200) continue;
+    const linkMatch = /<link>([\s\S]*?)<\/link>/.exec(block);
+    items.push({ title, link: linkMatch ? decode(linkMatch[1]!) : '' });
+  }
+  return items;
 }
 
 /**
