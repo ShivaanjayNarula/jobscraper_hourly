@@ -62,8 +62,15 @@ export function outageStateFrom(suspected: ReadonlySet<Ats>): OutageState {
 export function outageChanges(
   previous: OutageState,
   current: ReadonlySet<Ats>,
-): { started: Ats[]; recovered: boolean } {
+): { started: Ats[]; recovered: Ats[] } {
   const started = [...current].filter((ats) => !previous[ats]);
-  const recovered = current.size === 0 && Object.keys(previous).length > 0;
+  // Per platform, not "the whole set cleared". Recovery used to be
+  // `current.size === 0`, which meant one chronically-blocked platform kept
+  // every other platform's tracking issue open forever: Darwinbox is bot-walled
+  // from the Actions runners more often than not, so the suspected set was
+  // almost never empty, and eight issues (trakstar, zappyhire, turbohire,
+  // phenom, greythr, peoplestrong, freshteam, eightfold) sat open for a week
+  // after those platforms had recovered.
+  const recovered = (Object.keys(previous) as Ats[]).filter((ats) => !current.has(ats));
   return { started, recovered };
 }
