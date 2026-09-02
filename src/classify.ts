@@ -71,6 +71,17 @@ const RULES: Record<Industry, SeniorityRules> = {
 const INTERN = /\b(intern|internship|co[- ]?op|summer analyst|industrial trainee)\b/i;
 
 /**
+ * Work-mode normalization. The location string decides remote/hybrid/onsite
+ * (a "Remote, US" posting must not read as remote-for-India here — that gate
+ * already lives in filter.ts's locationMatches), with the body only breaking
+ * ties a bare location can't: many Workday boards say just "Bengaluru" while
+ * the description says "remote during onboarding".
+ */
+const REMOTE_MODE = /\b(?:remote|work from home|wfh|fully distributed)\b/i;
+const HYBRID_MODE = /\bhybrid\b/i;
+const VISA = /\bvisa\b[^.]{0,40}\bsponsor|\bsponsor(ship)?\b[^.]{0,40}\bvisa\b|work (?:authorization|permit) (?:sponsorship|support)/i;
+
+/**
  * Roles that are entry-level but not what a BE CSE grad is hunting for.
  * JPMorgan's board in particular is full of retail branch positions.
  */
@@ -155,6 +166,10 @@ export interface Classification {
   /** False when the title clearly marks the role as beyond entry level. */
   isJunior: boolean;
   excluded: boolean;
+  /** Normalized from location+body wording; null when the posting doesn't say. */
+  workMode: 'remote' | 'hybrid' | 'onsite' | null;
+  /** Posting explicitly mentions visa sponsorship — rare and high-signal for India GCC roles. */
+  visa: boolean;
 }
 
 export function classify(job: RawJob, industry: Industry): Classification {
@@ -176,11 +191,22 @@ export function classify(job: RawJob, industry: Industry): Classification {
   const isJunior =
     !titleSaysSenior && !yearsSaySenior && (yearsSayJunior || titleSaysJunior || min === null);
 
+  const locRemote = REMOTE_MODE.test(job.location);
+  const workMode: Classification['workMode'] = HYBRID_MODE.test(`${job.location} ${body}`)
+    ? 'hybrid'
+    : locRemote || REMOTE_MODE.test(body)
+      ? 'remote'
+      : job.location
+        ? 'onsite'
+        : null;
+
   return {
     minYears: min,
     maxYears: max,
     isIntern: INTERN.test(title),
     isJunior,
     excluded: HARD_EXCLUDE.test(title),
+    workMode,
+    visa: VISA.test(body),
   };
 }
