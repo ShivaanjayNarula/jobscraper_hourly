@@ -19,7 +19,7 @@ on:
     #
     # Before lengthening this again: check real run durations first. The last
     # schedule change was made on an unmeasured hunch and had to be reverted.
-    - cron: '7,27,47 * * * *'
+    - cron: '*/20 * * * *'
   workflow_dispatch:
     inputs:
       test_email:
@@ -64,7 +64,40 @@ jobs:
           key: outage-${{ github.run_id }}
           restore-keys: outage-
 
+      # A capped window of booleans per host — small even with hundreds of
+      # hosts. Persists worst-N appearances across runs so persistentlySlow()
+      # can tell "consistently bad" from "one noisy run."
+      - name: Restore host stats history
+        uses: actions/cache/restore@v4
+        with:
+          path: state/host-stats.json
+          key: host-stats-${{ github.run_id }}
+          restore-keys: host-stats-
+
       - run: npm install --no-audit --no-fund
+
+      # catalog.ts merges this run's matches against whatever is at local
+      # data/jobs.json to decide `firstSeen`/`closedAt`/`reopened` — but this
+      # checkout only has main's COMMITTED snapshot, never the live one that
+      # the "Publish catalog" step below actually publishes, because nothing
+      # ever pulled it back before now. That committed snapshot's last real
+      # update was 2026-08-23 (checked via `git log -- data/jobs.json`), so
+      # every run since was merging against a growing-more-stale baseline:
+      # almost no live job id matched it, so almost every entry got
+      # `firstSeen` reset to "now" on every single run — found 2026-09-02
+      # when a live catalogue fetch showed 2,440 of 2,444 entries sharing
+      # the exact same firstSeen timestamp, down to the millisecond.
+      # `firstSeen` was consequently useless everywhere it's read (the web
+      # UI's per-day tabs, and outreach.ts's triggered-lane detection added
+      # the same day). Pull the real one first, same fetch this fix already
+      # uses in outreach.yml.
+      # `|| true`: a failed fetch must degrade to today's prior behavior
+      # (compare against the stale commit, reset firstSeen for everything
+      # that doesn't match), not fail the run — the hunt itself doesn't
+      # depend on this file being current, only the bookkeeping does.
+      - name: Restore live catalogue from the data branch
+        run: |
+          curl -fsSL --retry 2 -o data/jobs.json "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/data/jobs.json" || true
 
       # Only Google and Meta need a real browser; everything else is a JSON call.
       # The download is ~115 MB, so it's cached — otherwise it would dominate the
@@ -116,26 +149,35 @@ jobs:
           path: state/outage.json
           key: outage-${{ github.run_id }}
 
+      - name: Save host stats history
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/host-stats.json
+          key: host-stats-${{ github.run_id }}
+
       # Silent self-healing (outage.ts withholds eviction) was the whole fix for
       # boards vanishing under a platform-wide block, but nothing told anyone it
       # had happened. This is the other half: one tracking issue per platform,
       # opened when it first looks like an outage and closed when it clears —
       # not a comment every 20 minutes for as long as the outage lasts, since
       # `outage_started`/`outage_recovered` only fire on the actual transition.
+      # continue-on-error: a missing label ('outage' didn't exist until
+      # 2026-08-24) crashed this step with `set -e`, which — since no later
+      # step has `if: always()` — skipped every step after it INCLUDING Email
+      # new roles, Commit board list, and Publish catalog to data branch.
+      # Confirmed on run 32652192922: one full run's alert email, board-list
+      # commit, and web catalog publish were all silently lost to a missing
+      # GitHub label. This step is notification-only and must never be able
+      # to take the real pipeline down with it again.
       - name: Report suspected ATS outage
-        if: "!inputs.test_email && (steps.hunt.outputs.outage_started != '' || steps.hunt.outputs.outage_recovered == '1')"
-        # Issue reporting is informative; a missing label or transient GitHub
-        # API failure must not prevent the catalogue from being published.
         continue-on-error: true
+        if: "!inputs.test_email && (steps.hunt.outputs.outage_started != '' || steps.hunt.outputs.outage_recovered != '')"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STARTED: ${{ steps.hunt.outputs.outage_started }}
           RECOVERED: ${{ steps.hunt.outputs.outage_recovered }}
         run: |
-          # Fresh repositories only have GitHub's default labels. Create the
-          # label this workflow depends on before attempting to use it.
-          gh label create outage --repo "$GITHUB_REPOSITORY" --color B60205 \
-            --description "Suspected ATS platform outage" --force
           if [ -n "$STARTED" ]; then
             for ats in ${STARTED//,/ }; do
               existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label outage --state open \
@@ -147,9 +189,48 @@ jobs:
               fi
             done
           fi
-          if [ "$RECOVERED" = "1" ]; then
-            for number in $(gh issue list --repo "$GITHUB_REPOSITORY" --label outage --state open --json number --jq '.[].number'); do
-              gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Cleared — the run no longer sees most of this platform's boards failing."
+          # Close per platform, matching the volume-drop step below. Closing every
+          # open outage issue on any recovery was wrong in both directions: it
+          # shut tickets for platforms still failing, and — because recovery
+          # only fired when the ENTIRE suspected set emptied — it never fired at
+          # all while Darwinbox stayed bot-walled, so eight issues sat open for a
+          # week. See outageChanges() in src/outage.ts.
+          if [ -n "$RECOVERED" ]; then
+            for ats in ${RECOVERED//,/ }; do
+              for number in $(gh issue list --repo "$GITHUB_REPOSITORY" --label outage --state open \
+                --search "in:title $ats" --json number --jq '.[].number'); do
+                gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Cleared — the run no longer sees most of this platform's boards failing."
+              done
+            done
+          fi
+
+      # Same reasoning as the outage step above: notification-only, runs after
+      # the real work is committed, must never fail a run that already
+      # succeeded.
+      - name: Report suspected board volume drop
+        continue-on-error: true
+        if: "!inputs.test_email && (steps.hunt.outputs.volume_dropped != '' || steps.hunt.outputs.volume_recovered != '')"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DROPPED: ${{ steps.hunt.outputs.volume_dropped }}
+          RECOVERED: ${{ steps.hunt.outputs.volume_recovered }}
+        run: |
+          if [ -n "$DROPPED" ]; then
+            for key in ${DROPPED//,/ }; do
+              existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label board-drop --state open \
+                --search "in:title $key" --json number --jq '.[0].number')
+              if [ -z "$existing" ]; then
+                gh issue create --repo "$GITHUB_REPOSITORY" \
+                  --title "Suspected posting drop: $key" --label board-drop \
+                  --body "This board returned a small fraction of its recent posting count in the latest run while its adapter reported success — see \`volume-stats.ts\`. Usual causes: changed site slug, truncated response, or a cap regression. This issue closes itself automatically once the count recovers. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              fi
+            done
+          fi
+          if [ -n "$RECOVERED" ]; then
+            for key in ${RECOVERED//,/ }; do
+              for number in $(gh issue list --repo "$GITHUB_REPOSITORY" --label board-drop --state open --search "in:title $key" --json number --jq '.[].number'); do
+                gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Cleared — posting count back in line with the board's own baseline."
+              done
             done
           fi
 
