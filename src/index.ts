@@ -5,21 +5,41 @@ import { mapLimit, mapLimitByKey } from './fetchers/util.js';
 import { classify } from './classify.js';
 import { isFreshEnough, locationMatches, normalizeForDedup, preScreen, shouldAlert } from './filter.js';
 import { renderEmail, subject } from './email.js';
-import { updateCatalog } from './catalog.js';
-import { CONCURRENCY, DROP_AFTER_FAILING_DAYS, HOST_CONCURRENCY } from './config.js';
+import { rampingCompanies } from './trends.js';
+import { updateCatalog, type CatalogEntry } from './catalog.js';
+import { CONCURRENCY, BLOCK_HOLD_DAYS, DROP_AFTER_FAILING_DAYS, HOST_CONCURRENCY } from './config.js';
+import { BlockError, type BlockKind } from './fetchers/block.js';
 import {
   loadCompanies,
+  loadBoardVolumes,
+  loadHostHistory,
   loadOutageState,
+  loadReposts,
   loadSeen,
+  loadVolumeDrops,
   readJson,
   recordFailure,
   recordSuccess,
+  saveBoardVolumes,
   saveCompanies,
+  saveHostHistory,
   saveOutageState,
+  saveReposts,
+  saveVolumeDrops,
   saveSeen,
+  updateReposts,
 } from './state.js';
+import { extractSalary } from './salary.js';
 import { detectOutage, outageChanges, outageStateFrom } from './outage.js';
+import {
+  detectVolumeDrops,
+  updateVolumeHistory,
+  volumeDropChanges,
+  volumeDropStateFrom,
+  type VolumeDropState,
+} from './volume-stats.js';
 import { selectBoards } from './select-boards.js';
+import { formatHostStats, persistentlySlow, summarizeHostStats, updateHistory, type PollTiming } from './host-stats.js';
 
 const nowIso = new Date().toISOString();
 const dryRun = process.env.DRY_RUN === '1';
@@ -35,6 +55,9 @@ interface BoardResult {
   company: Company;
   jobs: RawJob[];
   error?: string;
+  /** Set when the error was a classified bot wall, not an ordinary failure. */
+  blockKind?: BlockKind;
+  durationMs: number;
 }
 
 /**
@@ -58,11 +81,19 @@ const limitForHost = (key: string): number =>
   HOST_CONCURRENCY[key.split(':')[0]!] ?? HOST_CONCURRENCY.default!;
 
 async function pollBoard(company: Company): Promise<BoardResult> {
+  const started = Date.now();
   try {
     const jobs = await FETCHERS[company.ats].list(company);
-    return { company, jobs };
+    return { company, jobs, durationMs: Date.now() - started };
   } catch (error) {
-    return { company, jobs: [], error: (error as Error).message };
+    const err = error as Error;
+    return {
+      company,
+      jobs: [],
+      error: err.message,
+      blockKind: err instanceof BlockError ? err.kind : undefined,
+      durationMs: Date.now() - started,
+    };
   }
 }
 
@@ -84,6 +115,11 @@ async function main(): Promise<void> {
   const companies = await loadCompanies();
   const seen = await loadSeen();
   const previousOutage = await loadOutageState();
+  const previousHostHistory = await loadHostHistory();
+  let reposts = await loadReposts();
+  const repostIds = new Set<string>();
+  const previousVolumeDrops: VolumeDropState = await loadVolumeDrops();
+  const previousBoardVolumes = await loadBoardVolumes();
 
   /**
    * The seen state lives in the Actions cache, not in git — at ~150,000 live
@@ -107,6 +143,47 @@ async function main(): Promise<void> {
       `(${selection.hot} hot, ${selection.cold} cold on rotation, ${selection.skipped} waiting)`,
   );
   const results = await mapLimitByKey(selection.polling, rateLimitKey, limitForHost, pollBoard);
+
+  const hostStats = summarizeHostStats(
+    results.map((r): PollTiming => ({ key: rateLimitKey(r.company), durationMs: r.durationMs, error: r.error })),
+  );
+  console.log(`slowest hosts this run (p95, worst first):\n${formatHostStats(hostStats)}`);
+
+  // Reconciliation: every board selected must have produced a result, error or
+  // not. mapLimitByKey has no reason to drop one, so a shortfall means the
+  // polling layer itself misbehaved — say it loudly rather than let the run
+  // quietly cover fewer boards than it claims.
+  if (results.length !== selection.polling.length) {
+    console.warn(
+      `RECONCILIATION: ${selection.polling.length - results.length} selected boards produced no result ` +
+        `(expected ${selection.polling.length}, got ${results.length})`,
+    );
+  }
+
+  // Silent partial-loss detection (see volume-stats.ts): only successful polls
+  // carry evidence, and only boards polled this run are judged.
+  const volumeKey = (c: Company) => `${c.ats}:${c.token}:${c.site ?? ''}`;
+  const volumeSamples = results
+    .filter((r) => !r.error)
+    .map((r) => ({ key: volumeKey(r.company), count: r.jobs.length }));
+  const polledVolumeKeys = new Set(volumeSamples.map((s) => s.key));
+  const boardVolumes = updateVolumeHistory(previousBoardVolumes, volumeSamples);
+  const volumeDrops = detectVolumeDrops(boardVolumes, polledVolumeKeys);
+  const volumeDelta = volumeDropChanges(previousVolumeDrops, volumeDrops, polledVolumeKeys);
+  if (volumeDelta.started.length) {
+    console.warn(`suspected silent posting drop: ${volumeDelta.started.join(', ')}`);
+  }
+  if (volumeDelta.recovered.length) {
+    console.log(`earlier suspected posting drops cleared: ${volumeDelta.recovered.join(', ')}`);
+  }
+
+  const hostHistory = updateHistory(previousHostHistory, hostStats);
+  const slowHosts = persistentlySlow(hostHistory);
+  if (slowHosts.length > 0) {
+    console.warn(
+      `consistently among the worst hosts across its last several runs, not just this one: ${slowHosts.join(', ')}`,
+    );
+  }
 
   /**
    * Boards not polled this run must survive untouched. `updatedCompanies` is
@@ -135,14 +212,35 @@ async function main(): Promise<void> {
   if (outageDelta.started.length) console.warn(`newly suspected outage: ${outageDelta.started.join(', ')}`);
   if (outageDelta.recovered) console.log('previously suspected outage has cleared');
 
-  for (const { company, jobs, error } of results) {
+  for (const { company, jobs, error, blockKind } of results) {
+    // Repost tracking is per-board: only a board we just polled gives evidence
+    // about which of its ids are still live (cold rotation means the others
+    // carry none). Collected across the inner loop, applied once after it.
+    const boardPrefix = `${company.ats}:${company.token}:`;
+    const boardIds: string[] = [];
     if (error) {
       const failed = recordFailure(company, nowIso);
       const days = (Date.now() - new Date(failed.failingSince!).getTime()) / 86_400_000;
       console.warn(`  ! ${company.name}: ${error}`);
-      if (days >= DROP_AFTER_FAILING_DAYS && !suspectedOutage.has(company.ats)) {
+      /**
+       * A classified bot wall holds the eviction clock past the ordinary day-3
+       * drop — a board behind a fresh Cloudflare rule is unreachable from the
+       * runner's IPs, not dead (the Darwinbox mass-eviction was exactly this,
+       * caught too late because every failure looked identical). The outage
+       * ratio detector covers the platform-wide case; this covers the single
+       * board on an otherwise-healthy ATS. `BLOCK_HOLD_DAYS` bounds the
+       * staleness so a permanently walled board still exits eventually.
+       */
+      const heldByWall = blockKind !== undefined && days < BLOCK_HOLD_DAYS;
+      if (days >= DROP_AFTER_FAILING_DAYS && !suspectedOutage.has(company.ats) && !heldByWall) {
         dropped.push(company.name);
       } else {
+        if (heldByWall) {
+          console.warn(
+            `    bot wall (${blockKind}), holding past day-${DROP_AFTER_FAILING_DAYS} ` +
+              `eviction until day-${BLOCK_HOLD_DAYS}`,
+          );
+        }
         updatedCompanies.push(failed);
       }
       continue;
@@ -179,10 +277,15 @@ async function main(): Promise<void> {
        */
       if (!preScreen(job, company)) continue;
       screened++;
+      boardIds.push(id);
       if (seen[id] && !testEmail) continue;
+      // A previously-live id alerting again while stamped `gone` is a reopened
+      // requisition — flagged on the job, not silently treated as brand-new.
+      if (reposts[id]?.gone) repostIds.add(id);
       seen[id] = nowIso;
       fresh.push({ company, job });
     }
+    reposts = updateReposts(reposts, boardIds, boardPrefix, nowIso);
   }
 
   // Already screened above, so every fresh job is a candidate worth enriching —
@@ -204,6 +307,7 @@ async function main(): Promise<void> {
     const c = classify(job, company.industry);
     const verdict = shouldAlert(job, company, c);
     if (!verdict.keep) continue;
+    const salary = extractSalary(job.salary, job.text);
     matches.push({
       ...job,
       id: `${company.ats}:${company.token}:${job.externalId}`,
@@ -212,19 +316,26 @@ async function main(): Promise<void> {
       minYears: c.minYears,
       maxYears: c.maxYears,
       isIntern: c.isIntern,
+      ...(salary ? { salaryMin: salary.minLpa, salaryMax: salary.maxLpa } : {}),
+      workMode: c.workMode,
+      visa: c.visa || undefined,
+      isRepost: repostIds.has(`${company.ats}:${company.token}:${job.externalId}`) || undefined,
     });
   }
 
   matches.sort((a, b) => a.company.localeCompare(b.company) || a.title.localeCompare(b.title));
 
   // Large employers post one role as several requisitions — Amazon lists the
-  // same job three times under different IDs. They're one application to you, so
-  // collapse them. Every original ID still went into `seen`, so the copies are
-  // suppressed permanently rather than re-alerting next hour.
+  // same job three times under different IDs. They're one application to you,
+  // so collapse them. The company name goes through the same normalizer as
+  // the title: two tracked entries for one employer that differ only by case
+  // or punctuation (the Growe two-boards shape, before canonical renaming)
+  // must collapse too. Every original ID still went into `seen`, so the
+  // copies are suppressed permanently rather than re-alerting next hour.
   //
   const byRole = new Map<string, Job>();
   for (const job of matches) {
-    const key = `${job.company}|${normalizeForDedup(job.title)}|${normalizeForDedup(job.location)}`;
+    const key = `${normalizeForDedup(job.company)}|${normalizeForDedup(job.title)}|${normalizeForDedup(job.location)}`;
     const previous = byRole.get(key);
     if (!previous || (job.minYears ?? 99) < (previous.minYears ?? 99)) byRole.set(key, job);
   }
@@ -244,6 +355,10 @@ async function main(): Promise<void> {
     const prunedCount = await saveSeen(seen);
     if (prunedCount) console.log(`pruned ${prunedCount} expired IDs`);
     await saveOutageState(outageStateFrom(suspectedOutage));
+    await saveHostHistory(hostHistory);
+    await saveReposts(reposts);
+    await saveBoardVolumes(boardVolumes);
+    await saveVolumeDrops(volumeDropStateFrom(volumeDrops));
   }
 
   await mkdir('out', { recursive: true });
@@ -272,8 +387,19 @@ async function main(): Promise<void> {
   }
 
   const wroteEmail = deduped.length > 0 && !dryRun && !coldStart;
+
+  /**
+   * Ramping employers come from the catalogue as it stood BEFORE this run's
+   * update — the aggregate view lags one run by design and costs no extra
+   * state. Only read when an email will actually be written.
+   */
+  let ramping: Awaited<ReturnType<typeof rampingCompanies>> = [];
   if (wroteEmail) {
-    await writeFile('out/email.html', renderEmail(freshForEmail, staleForEmail), 'utf8');
+    const previousCatalog = await readJson<CatalogEntry[]>('data/jobs.json', []);
+    ramping = rampingCompanies(previousCatalog);
+  }
+  if (wroteEmail) {
+    await writeFile('out/email.html', renderEmail(freshForEmail, staleForEmail, ramping), 'utf8');
   }
 
   /**
@@ -291,7 +417,9 @@ async function main(): Promise<void> {
       `new_count=${wroteEmail ? deduped.length : 0}\nsubject=${subject(freshForEmail, staleForEmail)}\n` +
         `hour=${new Date().getUTCHours()}\n` +
         `outage_started=${outageDelta.started.join(',')}\n` +
-        `outage_recovered=${outageDelta.recovered ? '1' : ''}\n`,
+        `outage_recovered=${outageDelta.recovered.join(',')}\n` +
+        `volume_dropped=${volumeDelta.started.join(',')}\n` +
+        `volume_recovered=${volumeDelta.recovered.join(',')}\n`,
     );
   }
 }
