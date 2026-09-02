@@ -89,6 +89,25 @@ export interface Job extends RawJob {
   minYears: number | null;
   maxYears: number | null;
   isIntern: boolean;
+  /** Normalized ₹ LPA from the posting's own salary field or description. */
+  salaryMin?: number;
+  salaryMax?: number;
+  workMode?: 'remote' | 'hybrid' | 'onsite' | null;
+  visa?: boolean;
+  /** Was live here before, vanished, and came back — a re-opened requisition. */
+  isRepost?: boolean;
 }
 
 export type SeenState = Record<string, string>;
+
+/**
+ * Repost tracking. `last` is the last run the id was live; `gone` is set when
+ * it stopped being live and cleared when it returns — an id that alerts while
+ * `gone` is set is a reopened requisition, one of the strongest urgency
+ * signals there is (see PHASES.md Phase A).
+ */
+export interface RepostEntry {
+  last: string;
+  gone?: string;
+}
+export type RepostState = Record<string, RepostEntry>;
