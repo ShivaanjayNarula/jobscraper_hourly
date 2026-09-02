@@ -15,8 +15,25 @@ export const INCLUDE_INTERNSHIPS = true;
  */
 export const DROP_AFTER_FAILING_DAYS = 3;
 
+/**
+ * Bot-wall failures (see `fetchers/block.ts`) hold the eviction clock longer
+ * than ordinary failures: a board behind a fresh Cloudflare rule is not dead,
+ * and the Darwinbox mass-eviction proved waiting it out is correct. This is
+ * the hard backstop — a board blocked continuously for this long needs eyes
+ * on it either way, so staleness stays bounded instead of growing forever.
+ */
+export const BLOCK_HOLD_DAYS = 14;
+
 /** Forget a job ID after this long, so the state file stays small. */
 export const SEEN_RETENTION_DAYS = 45;
+
+/**
+ * How long a vanished posting stays eligible to be flagged as a repost when it
+ * comes back. Beyond this window a returning id is indistinguishable from a
+ * genuinely new requisition (same req number reused months later), and the
+ * state file would grow for no alerting benefit.
+ */
+export const REPOST_WINDOW_DAYS = 30;
 
 /** Render this many roles as full cards; the rest become compact one-liners. */
 export const EMAIL_DETAIL_LIMIT = 25;
