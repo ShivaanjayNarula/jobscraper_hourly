@@ -1,9 +1,5 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import type { Company, RawJob } from '../types.js';
-import { toPlainText } from './util.js';
-
-const run = promisify(execFile);
+import { curlJson, toPlainText } from './util.js';
 
 interface DarwinboxJob {
   id: string;
@@ -74,20 +70,16 @@ async function post(company: Company, page: number): Promise<unknown> {
   const companyId = company.site ?? '';
   const url = `https://${company.token}.darwinbox.in/ms/candidateapi/job/alljobs?companyId=${companyId}`;
   const origin = `https://${company.token}.darwinbox.in`;
-  const { stdout } = await run(
-    'curl',
-    [
-      '-s', '--max-time', '30', '-X', 'POST', url,
-      '-H', 'Content-Type: application/json',
-      '-H', 'Accept: application/json, text/plain, */*',
-      '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
-      '-H', `Origin: ${origin}`,
-      '-H', `Referer: ${origin}/ms/candidate/careers`,
-      '-d', JSON.stringify({ companyId, page, sort_option: 'new', limit: PAGE_SIZE }),
-    ],
-    { maxBuffer: 32 * 1024 * 1024 },
-  );
-  return JSON.parse(stdout);
+  return curlJson(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/plain, */*',
+      Origin: origin,
+      Referer: `${origin}/ms/candidate/careers`,
+    },
+    body: JSON.stringify({ companyId, page, sort_option: 'new', limit: PAGE_SIZE }),
+  });
 }
 
 function flatten(value: string[] | string | undefined): string {
