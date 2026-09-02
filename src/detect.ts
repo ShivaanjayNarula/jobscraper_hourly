@@ -48,6 +48,20 @@ interface Detection {
   unsupported?: string;
 }
 
+const SPA_ROOT =
+  /id="(root|app|__next|__nuxt|q-app)"|ng-app=|data-reactroot|window\.__INITIAL_STATE__|window\.__NEXT_DATA__/i;
+const SPA_NOSCRIPT = /<noscript>[^<]*enable javascript/i;
+
+function looksClientRendered(html: string): boolean {
+  if (!SPA_ROOT.test(html) && !SPA_NOSCRIPT.test(html)) return false;
+  const visible = html
+    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return visible.length < 200;
+}
+
 /** "razorpay.com" -> "Razorpay", "fractal.ai" -> "Fractal". */
 function nameFromDomain(domain: string): string {
   const base = domain.replace(/^www\./, '').split('.')[0] ?? domain;
@@ -80,6 +94,19 @@ async function detect(domain: string, industry: Industry): Promise<Detection> {
 
     const blocked = NO_ADAPTER.exec(html);
     if (blocked) return { domain, unsupported: blocked[0] };
+
+    // A client-rendered SPA shell carries no server-side ATS markers at all,
+    // so without this check it falls out of the loop looking identical to
+    // "nothing found". Heuristics ported from fastCRW's SPA detector
+    // (`crw-renderer/src/detector.rs`): a framework root marker plus almost no
+    // visible text means rendering is deferred to JS in the browser.
+    if (looksClientRendered(html)) {
+      return {
+        domain,
+        unsupported:
+          'client-rendered careers SPA — no server-side ATS markers; candidates need the rendered.ts path or manual extraction',
+      };
+    }
   }
   return { domain };
 }
