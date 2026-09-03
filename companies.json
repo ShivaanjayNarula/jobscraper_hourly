@@ -113240,5 +113240,12 @@
     "industry": "tech",
     "source": "discovered",
     "token": "zerion"
+  },
+  {
+    "name": "Wonderful",
+    "ats": "ashby",
+    "token": "wonderful",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
