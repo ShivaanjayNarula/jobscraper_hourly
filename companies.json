@@ -112967,5 +112967,278 @@
     "site": "AegisCareers",
     "industry": "tech",
     "source": "discovered"
+  },
+  {
+    "name": "0x",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "0x"
+  },
+  {
+    "name": "AbhiBus",
+    "ats": "smartrecruiters",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "AbhiBus"
+  },
+  {
+    "name": "Bci",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "bci",
+    "host": "wd10",
+    "site": "BCI_Careers"
+  },
+  {
+    "name": "Biofourmis",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "biofourmis"
+  },
+  {
+    "name": "BizLibrary",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "bizlibrary"
+  },
+  {
+    "name": "Build AI",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "build-ai"
+  },
+  {
+    "name": "Cbcrc",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cbcrc",
+    "host": "wd3",
+    "site": "CBC_Radio-Canada_Jobs"
+  },
+  {
+    "name": "CleanSpark",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cleanspark"
+  },
+  {
+    "name": "Coates Group",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "coatesgroup"
+  },
+  {
+    "name": "Cofertility",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cofertility"
+  },
+  {
+    "name": "CORSAIR",
+    "ats": "oracle",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "edix",
+    "host": "fa.us2",
+    "siteNumber": "CX_1"
+  },
+  {
+    "name": "CrowdRiff",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "crowdriff"
+  },
+  {
+    "name": "eubt.fa.us6.oraclecloud.com",
+    "ats": "oracle",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "eubt",
+    "host": "fa.us6",
+    "siteNumber": "CX_1"
+  },
+  {
+    "name": "Greptile",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "greptile"
+  },
+  {
+    "name": "Hudl India",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "hudlindia"
+  },
+  {
+    "name": "hza.fa.us1.oraclecloud.com",
+    "ats": "oracle",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "hza",
+    "host": "fa.us1",
+    "siteNumber": "CX_1"
+  },
+  {
+    "name": "Integra LifeSciences",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "integralife",
+    "host": "wd1",
+    "site": "careers"
+  },
+  {
+    "name": "Jobgether",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "jobgether"
+  },
+  {
+    "name": "KIND",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "supportkind"
+  },
+  {
+    "name": "maxwell",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "maxwell"
+  },
+  {
+    "name": "MO",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "MOstudio"
+  },
+  {
+    "name": "Nitricity",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "nitricity"
+  },
+  {
+    "name": "North America",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cengage",
+    "host": "wd5",
+    "site": "cengagenorthamericacareers"
+  },
+  {
+    "name": "Pocket Entertainment Corp",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "pocketfm"
+  },
+  {
+    "name": "privacy",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "privacy"
+  },
+  {
+    "name": "RGA",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "rgare",
+    "host": "wd1",
+    "site": "careers"
+  },
+  {
+    "name": "Scottsmiraclegro",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "scottsmiraclegro",
+    "host": "wd5",
+    "site": "smgexternal"
+  },
+  {
+    "name": "Semrush",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "semrush",
+    "host": "wd5",
+    "site": "semrushcareers"
+  },
+  {
+    "name": "Suse",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "suse",
+    "host": "wd3",
+    "site": "jobsatsuse"
+  },
+  {
+    "name": "Thales",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "thales",
+    "host": "wd3",
+    "site": "careers"
+  },
+  {
+    "name": "Thekineticgroup",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "thekineticgroup",
+    "host": "wd1",
+    "site": "external_tkg"
+  },
+  {
+    "name": "TSMG",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "tsmg"
+  },
+  {
+    "name": "Virtua",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "virtua",
+    "host": "wd1",
+    "site": "virtua_health_external_career_site"
+  },
+  {
+    "name": "yieldmo",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "yieldmo"
+  },
+  {
+    "name": "Zerion",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "zerion"
   }
 ]
