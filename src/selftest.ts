@@ -5,6 +5,10 @@ import { detectOutage, outageChanges } from './outage.js';
 import { selectBoards } from './select-boards.js';
 import { epochToIso } from './fetchers/eightfold.js';
 import { safeIso } from './fetchers/darwinbox.js';
+import { toIso as recruiteeToIso } from './fetchers/recruitee.js';
+import { isPlaceholderLocation, parsePostedOn, parseRobotsSites } from './fetchers/workday.js';
+import { refreshedPostedAt } from './catalog.js';
+import { boardKey } from './board-url.js';
 import { BlockError, classifyFailure, classifyOkBody } from './fetchers/block.js';
 import { summarizeHostStats, updateHistory, persistentlySlow } from './host-stats.js';
 import {
@@ -19,9 +23,9 @@ import {
   factScore,
 } from './contacts.js';
 import { bodySimilarity, bounceGateDecision, displayName, domainRiskTally, isTriggered, postedAgeDays, renderBody, touchGap, TRIGGER_WINDOW_DAYS } from './outreach.js';
-import { applyboltLookup, extractEmails, packageNameCandidates, parseApplyBolt, parseDmarcRua, roleAddresses } from './contact-sources.js';
+import { applyboltLookup, extractEmails, extractLeadership, packageNameCandidates, parseApplyBolt, parseDmarcRua, roleAddresses } from './contact-sources.js';
 import { controlAddress, mxProvider, rejectionIsMeaningful } from './verify-email.js';
-import type { Company, Industry, RawJob } from './types.js';
+import type { BoardState, Company, Industry, RawJob } from './types.js';
 
 /**
  * Regression tests for the two regex layers that decide everything.
@@ -383,6 +387,106 @@ check('a garbled string is dropped, not thrown', safeIso('not a date'), undefine
 check('an out-of-range number is dropped, not thrown', safeIso(-9_223_372_036_854_776_000), undefined);
 check('undefined stays undefined', safeIso(undefined), undefined);
 
+console.log('date parsing (recruitee)');
+// "2026-08-19 13:16:05 UTC" — not standard ISO, just close enough that
+// `new Date()` happens to parse it; guarded anyway, same rule as every ATS.
+check('a real recruitee timestamp parses', recruiteeToIso('2026-08-19 13:16:05 UTC'), '2026-08-19T13:16:05.000Z');
+check('a garbled string is dropped, not thrown', recruiteeToIso('not a date'), undefined);
+check('null is dropped', recruiteeToIso(null), undefined);
+check('undefined stays undefined', recruiteeToIso(undefined), undefined);
+
+console.log('workday multi-location placeholder detection');
+// Measured 2026-09-04: 13.6% of live Workday jobs across 907 hot boards carry
+// a bare count instead of real place names — a Bangalore role posted
+// alongside five other offices is invisible to locationMatches otherwise.
+check('a bare count is a placeholder', isPlaceholderLocation('6 Locations'), true);
+check('singular form still matches', isPlaceholderLocation('1 Location'), true);
+check('lowercase still matches', isPlaceholderLocation('2 locations'), true);
+check('a real single location is not a placeholder', isPlaceholderLocation('Bengaluru, India'), false);
+check('remote is not a placeholder', isPlaceholderLocation('Remote'), false);
+check('empty string is not a placeholder', isPlaceholderLocation(''), false);
+
+console.log('date parsing (workday relative labels)');
+// Workday dates postings with an English phrase, not a timestamp. Storing the
+// phrase raw made `new Date()` return NaN, and `isFreshEnough` treats an
+// unparseable date as fresh — so all 3,561 Workday entries in the catalogue
+// (38% of it) were exempt from the freshness gate, 1,377 of them while openly
+// saying they were over a month old.
+const dayOf = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+check('"Posted Today" is today', parsePostedOn('Posted Today'), dayOf(0));
+check('"Posted Yesterday" is one day back', parsePostedOn('Posted Yesterday'), dayOf(1));
+check('"Posted 5 Days Ago" is five days back', parsePostedOn('Posted 5 Days Ago'), dayOf(5));
+check('"Posted 1 Day Ago" (singular) parses', parsePostedOn('Posted 1 Day Ago'), dayOf(1));
+// A floor, not a date: the only expression of it is `now - 30d`, which moves
+// forward every day and would read as a permanent date-bump. Undefined keeps
+// these exactly as they behave today rather than inventing a moving timestamp.
+check('"Posted 30+ Days Ago" stays undefined', parsePostedOn('Posted 30+ Days Ago'), undefined);
+check('an unrecognised label is dropped', parsePostedOn('Posted a while back'), undefined);
+check('undefined stays undefined', parsePostedOn(undefined), undefined);
+check('an absurd day count is dropped, not thrown', parsePostedOn('Posted 999999 Days Ago'), undefined);
+
+console.log('workday robots.txt site discovery');
+// Every existing Workday entry carries exactly one `site`, whichever URL
+// happened to be observed when it was added — CIBC's tenant actually hosts
+// both `search` and `campus`, and there was no way to see the second one.
+// Ported from open-jobs' `discoverSites` (CC0), fixture-tested here since it's
+// pure text parsing with no network.
+check(
+  'Allow lines win, one site per line',
+  parseRobotsSites('User-agent: *\nAllow: /search/\nAllow: /campus/\n').join(','),
+  'search,campus',
+);
+check(
+  'Disallow is the fallback when nothing is Allow\'d',
+  parseRobotsSites('User-agent: *\nDisallow: /External_Career/\n').join(','),
+  'External_Career',
+);
+check(
+  'Sitemap lines also name a site',
+  parseRobotsSites('Sitemap: https://x.wd1.myworkdayjobs.com/en-US/External_Career/siteMap.xml\n').join(','),
+  'External_Career',
+);
+check(
+  'refreshFacet/events/wday are plumbing, not sites',
+  parseRobotsSites('Allow: /refreshFacet/\nAllow: /events/\nAllow: /wday/\nAllow: /search/\n').join(','),
+  'search',
+);
+check('no Allow or Disallow lines yields nothing', parseRobotsSites('User-agent: *\n').join(','), '');
+
+console.log('posting date refresh (date-bump capture)');
+// A posting already in `seen` short-circuits out of the run loop, so its
+// catalogue entry's postedAt used to be written once and frozen. That is what
+// made an employer re-stamping a stale requisition invisible. Only forward
+// moves count: Workday's relative labels only ever age, and taking a backwards
+// move would manufacture a bump on the next run when it moved forward again.
+check('a newer date replaces the stored one', refreshedPostedAt('2026-01-01', '2026-06-01'), true);
+check('an older date is ignored', refreshedPostedAt('2026-06-01', '2026-01-01'), false);
+check('the same date is not a change', refreshedPostedAt('2026-06-01', '2026-06-01'), false);
+check('a first date fills an empty slot', refreshedPostedAt(undefined, '2026-06-01'), true);
+check('a board dropping its date leaves the stored one alone', refreshedPostedAt('2026-06-01', undefined), false);
+check('an unparseable incoming date is ignored', refreshedPostedAt('2026-06-01', 'Posted 30+ Days Ago'), false);
+check('an unparseable stored date is replaced', refreshedPostedAt('Posted Today', '2026-06-01'), true);
+
+console.log('board identity key');
+// Roster identity, not job identity. One tenant can host several genuinely
+// different boards: RTX's `Private_Posting_No_TMP` and `REC_RTX_Ext_Gateway`
+// share a token and return non-overlapping listings. Keyed on ats+token alone
+// they collapse to one key, which silently dropped the second on import and let
+// `polledTokens` delete whichever site rotation had not selected that run.
+const bk = (p: Partial<Company>): string =>
+  boardKey({ name: 'x', ats: 'workday', token: 'globalhr', industry: 'tech', ...p } as Company);
+check('site is part of the key', bk({ site: 'REC_RTX_Ext_Gateway' }), 'workday:globalhr:rec_rtx_ext_gateway');
+check('two sites on one tenant are different boards',
+  bk({ site: 'REC_RTX_Ext_Gateway' }) !== bk({ site: 'Private_Posting_No_TMP' }), true);
+check('oracle falls back to siteNumber',
+  boardKey({ name: 'x', ats: 'oracle', token: 'EGUG', industry: 'tech', siteNumber: 'CX_1' } as Company),
+  'oracle:egug:cx_1');
+check('a site-less board still keys cleanly',
+  boardKey({ name: 'x', ats: 'greenhouse', token: 'Stripe', industry: 'tech' } as Company),
+  'greenhouse:stripe:');
+check('case does not create a second board',
+  bk({ site: 'External_Career' }), bk({ site: 'EXTERNAL_CAREER' }));
+
 console.log('board selection');
 // Rotation is what lets the corpus hold ~21,000 boards without the run time
 // growing with it. The failure modes here are silent: a hot board demoted to
@@ -393,14 +497,23 @@ const board = (token: string, extra: Partial<Company> = {}): Company => ({
 });
 
 const mixed = [
-  board('hot1', { lastIndiaAt: '2026-08-01T00:00:00Z', lastPolledAt: '2026-08-17T00:00:00Z' }),
-  board('hot2', { lastIndiaAt: '2026-07-01T00:00:00Z', lastPolledAt: '2026-08-17T00:00:00Z' }),
+  board('hot1', { lastIndiaAt: '2026-08-01T00:00:00Z' }),
+  board('hot2', { lastIndiaAt: '2026-07-01T00:00:00Z' }),
   board('coldNew'),                                          // never polled
-  board('coldOld', { lastPolledAt: '2026-08-01T00:00:00Z' }),
-  board('coldRecent', { lastPolledAt: '2026-08-16T00:00:00Z' }),
+  board('coldOld'),
+  board('coldRecent'),
 ];
 
-const picked = selectBoards(mixed, 4);
+// Poll times come from the board state now, not the Company row, so rotation
+// keeps working while companies.json stops being rewritten every run.
+const mixedState: BoardState = {
+  'greenhouse:hot1:': { lastPolledAt: '2026-08-17T00:00:00Z' },
+  'greenhouse:hot2:': { lastPolledAt: '2026-08-17T00:00:00Z' },
+  'greenhouse:coldold:': { lastPolledAt: '2026-08-01T00:00:00Z' },
+  'greenhouse:coldrecent:': { lastPolledAt: '2026-08-16T00:00:00Z' },
+};
+
+const picked = selectBoards(mixed, mixedState, 4);
 check('every hot board is polled', picked.hot, 2);
 check('cold boards fill the remaining slots only', picked.cold, 2);
 check('overflow cold boards are deferred, not dropped', picked.skipped, 1);
@@ -415,10 +528,41 @@ check(
 // alone blow past the ceiling.
 const allHot = selectBoards(
   [board('a', { lastIndiaAt: 'x' }), board('b', { lastIndiaAt: 'x' }), board('c', { lastIndiaAt: 'x' })],
+  {},
   1,
 );
 check('hot boards are never sacrificed to the ceiling', allHot.polling.length, 3);
 check('no cold slots remain when hot overflows', allHot.cold, 0);
+
+// An evicted cache must degrade into a clean full sweep, not a frozen slice:
+// with no state at all every cold board reads as never-polled, and all of them
+// are eligible rather than none.
+const noState = selectBoards(mixed, {}, 5);
+check('an empty board state polls every board, not zero', noState.polling.length, 5);
+check('nothing is stranded when the cache is gone', noState.skipped, 0);
+
+// Seeding covers the first run after the split and any later eviction: the
+// legacy fields still on the committed rows are a better starting point than
+// declaring the whole corpus never-polled.
+const legacy = [board('x', { lastPolledAt: '2026-08-05T00:00:00Z', failingSince: '2026-08-04T00:00:00Z' })];
+const seeded = seedBoardState({}, legacy);
+check('legacy poll time is seeded from the company row', seeded['greenhouse:x:']?.lastPolledAt, '2026-08-05T00:00:00Z');
+check('legacy failure streak is seeded too', seeded['greenhouse:x:']?.failingSince, '2026-08-04T00:00:00Z');
+// The state file always wins — it is the live copy, the row is the stale backup.
+const already: BoardState = { 'greenhouse:x:': { lastPolledAt: '2026-08-20T00:00:00Z' } };
+check('an existing state entry is not overwritten by the legacy row',
+  seedBoardState(already, legacy)['greenhouse:x:']?.lastPolledAt, '2026-08-20T00:00:00Z');
+
+// A failed poll keeps its old poll time, so it sorts early and is retried soon
+// instead of going to the back of a five-figure queue.
+check('a failure preserves the previous poll time',
+  recordFailure({ lastPolledAt: '2026-08-05T00:00:00Z' }, '2026-08-06T00:00:00Z').lastPolledAt,
+  '2026-08-05T00:00:00Z');
+check('a failure starts the streak', recordFailure(undefined, '2026-08-06T00:00:00Z').failingSince, '2026-08-06T00:00:00Z');
+check('an ongoing streak keeps its original start',
+  recordFailure({ failingSince: '2026-08-01T00:00:00Z' }, '2026-08-06T00:00:00Z').failingSince,
+  '2026-08-01T00:00:00Z');
+check('success clears the streak', recordSuccess('2026-08-06T00:00:00Z').failingSince, undefined);
 
 console.log('news extraction (discover-news.ts)');
 // headlineItems() pairs each title with its own <item>'s <link> — the digest
@@ -820,7 +964,7 @@ check('sparse window stays quiet', bounceGateDecision([mk([1], 1), mk([2]), mk([
 
 // --- Phase A: salary extraction, work-mode/visa classification, repost state.
 import { extractSalary } from './salary.js';
-import { updateReposts } from './state.js';
+import { recordFailure, recordSuccess, seedBoardState, updateReposts } from './state.js';
 import { REPOST_WINDOW_DAYS } from './config.js';
 import type { RepostState } from './types.js';
 
@@ -839,6 +983,21 @@ check('monthly stipend converts', JSON.stringify(sal(undefined, 'Stipend: ₹30,
 check('garbage is null not wrong', sal(undefined, 'salary negotiable, 500 employees'), null);
 check('absurd range rejected', sal(undefined, '0.5-99 LPA'), null);
 check('ats field beats body noise', JSON.stringify(sal('10-14 LPA', 'we once paid someone 2 LPA')), JSON.stringify({ minLpa: 10, maxLpa: 14 }));
+// Commas are stripped before matching, so a US range reaches the absolute-INR
+// branch (the ₹ is optional in every pattern), clears the bounds, and used to be
+// reported as a confident ₹1.2–1.8 LPA on a $120k-$180k posting.
+check('usd range is not read as rupees', sal(undefined, 'Base pay: $120,000 - $180,000 per annum'), null);
+check('usd code spelled out is caught too', sal(undefined, 'Salary USD 120,000 to 180,000 per annum'), null);
+check('gbp range rejected', sal(undefined, 'Salary £70,000 - £90,000 per annum'), null);
+check('usd monthly is not read as a rupee stipend', sal(undefined, 'Stipend: $5,000 per month'), null);
+// The guard is scoped to the match, not the whole source — an Indian posting
+// that happens to mention a dollar figure elsewhere still parses.
+check(
+  'a stray dollar elsewhere does not block a real inr range',
+  JSON.stringify(sal(undefined, 'We raised $50M last year. Compensation: ₹8,00,000 - 12,00,000 per annum')),
+  JSON.stringify({ minLpa: 8, maxLpa: 12 }),
+);
+check('lpa wording is unambiguous and unaffected', JSON.stringify(sal('$ figures aside, 12-18 LPA')), JSON.stringify({ minLpa: 12, maxLpa: 18 }));
 
 console.log('work mode + visa');
 const wm = (location: string, text?: string) => classify({ externalId: 'x', title: 'Engineer', location, url: '', text }, 'tech').workMode;
@@ -859,23 +1018,48 @@ console.log('repost tracking (board-scoped)');
 const T0 = daysAgo(3);
 const T1 = daysAgo(2);
 const T3 = daysAgo(1);
-let rs: RepostState = updateReposts({}, ['a:1:x'], 'a:1:', T0);
+const P = (...p: string[]) => new Set(p);
+let rs: RepostState = updateReposts({}, ['a:1:x'], P('a:1:'), T0);
 check('live id tracked clean', rs['a:1:x']?.gone, undefined);
-rs = updateReposts(rs, [], 'a:1:', T1);
+rs = updateReposts(rs, [], P('a:1:'), T1);
 check('absent id stamped gone', Boolean(rs['a:1:x']?.gone), true);
-rs = updateReposts(rs, ['a:1:x'], 'a:1:', T3);
+rs = updateReposts(rs, ['a:1:x'], P('a:1:'), T3);
 check('return clears gone', rs['a:1:x']?.gone, undefined);
 // Other-board entries are never touched by another board's poll — cold
 // rotation must not stamp absence on boards nobody looked at.
 rs['b:2:y'] = { last: T0 };
-rs = updateReposts(rs, [], 'a:1:', T1);
+rs = updateReposts(rs, [], P('a:1:'), T1);
 check('foreign board entry untouched by this poll', rs['b:2:y']?.gone, undefined);
 check('own board entry got gone stamp', Boolean(rs['a:1:x']?.gone), true);
 // Window expiry: an entry last seen long ago is pruned even while absent.
 const OLD = daysAgo(REPOST_WINDOW_DAYS + 1);
 rs = { 'stale:x': { last: OLD } };
-rs = updateReposts(rs, [], 'stale:', T3);
+rs = updateReposts(rs, [], P('stale:'), T3);
 check('expired absent entry pruned', rs['stale:x'], undefined);
+
+// Multi-site tenants: RTX runs two Workday sites that are separate rows in
+// companies.json but share one job-id space, because an id carries no site.
+// Judging one site's poll alone made the other's ids look absent and stamped
+// them gone; they then came back flagged as reposts. The run now passes every
+// polled board's ids in a single call, so the union is what gets judged.
+rs = updateReposts({}, ['workday:globalhr:req-A', 'workday:globalhr:req-B'], P('workday:globalhr:'), T0);
+rs = updateReposts(rs, ['workday:globalhr:req-A', 'workday:globalhr:req-B'], P('workday:globalhr:'), T1);
+check('sibling site ids survive a combined poll', rs['workday:globalhr:req-B']?.gone, undefined);
+check('and so does the first site', rs['workday:globalhr:req-A']?.gone, undefined);
+// A genuinely closed requisition on a polled tenant is still stamped.
+rs = updateReposts(rs, ['workday:globalhr:req-A'], P('workday:globalhr:'), T3);
+check('a truly absent id is still stamped gone', Boolean(rs['workday:globalhr:req-B']?.gone), true);
+
+// A token can itself contain colons — Zoho Recruit stores a whole board URL
+// there — so the prefix boundary cannot be found by splitting on ':'.
+const zoho = 'zohorecruit:https://careers.zohocorp.com/jobs/careers:9001';
+rs = updateReposts({ [zoho]: { last: T0 } }, [], P('zohorecruit:https://careers.zohocorp.com/jobs/careers:'), T1);
+check('a colon-bearing token still matches its own prefix', Boolean(rs[zoho]?.gone), true);
+// A different Zoho board's prefix must not claim it. (A bare `zohorecruit:`
+// would match, but the set only ever holds whole `ats:token:` prefixes built
+// from real rows, and no row has an empty token.)
+rs = updateReposts({ [zoho]: { last: T0 } }, [], P('zohorecruit:https://careers.bbinsight.com/jobs/Careers:'), T1);
+check('a sibling zoho board does not claim it', rs[zoho]?.gone, undefined);
 
 console.log('board volume anomaly detection');
 import { detectVolumeDrops, updateVolumeHistory, volumeDropChanges } from './volume-stats.js';
@@ -939,6 +1123,32 @@ check('entry without band skipped from n', st.every((t) => t.n <= 2), true);
 check('extractEmails pulls mailto + plaintext, deduped', JSON.stringify(extractEmails('<a href="mailto:HR@Zerodha.com">mail</a> and hr@zerodha.com')), JSON.stringify(['hr@zerodha.com']));
 check('extractEmails drops freemail', JSON.stringify(extractEmails('contact us at personal@gmail.com')), '[]');
 check('roleAddresses covers the standard boxes', roleAddresses('cred.club').length, 6);
+// extractLeadership — fixtures modeled directly on real leadership pages
+// checked live 2026-09-04. Freshworks' card layout (name/title in separate
+// block elements) is the shape this is built for; Zoho's flowing-prose
+// sentence about "our CEO, Sridhar Vembu" is the false positive an earlier,
+// text-collapsing version of this actually produced and had to be guarded
+// against — the 60-char title-line cap is what rejects it.
+const freshworksLike =
+  '<div class="card"><h3>Dennis Woodside</h3><p>CEO and President</p></div>' +
+  '<div class="card"><h3>Murali Swaminathan</h3><p>Chief Technology Officer</p></div>';
+check(
+  'name+title pairs extracted from a card layout',
+  JSON.stringify(extractLeadership(freshworksLike)),
+  JSON.stringify([
+    { name: 'Murali Swaminathan', title: 'Chief Technology Officer' },
+    { name: 'Dennis Woodside', title: 'CEO and President' },
+  ]),
+);
+check(
+  'engineering-tier title ranks above CEO',
+  extractLeadership(freshworksLike)[0]?.title,
+  'Chief Technology Officer',
+);
+const zohoLike =
+  '<p>The Government of India has bestowed the prestigious Padma Shri on our CEO, Sridhar Vembu! It is a moment of great honor.</p>';
+check('a long prose sentence is not read as a title line', extractLeadership(zohoLike).length, 0);
+check('a bare "CEO" with no name-shaped neighbour yields nothing', extractLeadership('<p>Leadership</p><p>CEO</p><p>Reports</p>').length, 0);
 // DMARC rua parsing — vendor-hosted and multi-record shapes both occur.
 check('parseDmarcRua reads plain rua', parseDmarcRua(['v=DMARC1; p=none; rua=mailto:dmarcreports@meesho.com']), 'dmarcreports@meesho.com');
 check('parseDmarcRua handles vendor host + split records', parseDmarcRua(['v=DMARC1;', 'rua=mailto:g72jrssx@ag.ap.dmarcian.com; p=quarantine']), 'g72jrssx@ag.ap.dmarcian.com');
