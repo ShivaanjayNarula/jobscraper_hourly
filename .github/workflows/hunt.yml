@@ -55,6 +55,30 @@ jobs:
           key: seen-${{ github.run_id }}
           restore-keys: seen-
 
+      # Poll times and failure streaks per board. These used to live on the rows
+      # in companies.json, which meant every run rewrote thousands of lines of a
+      # committed file. Losing this cache is safe: every board then reads as
+      # never-polled, which selectBoards already sorts first, so the next run is
+      # a clean full sweep rather than a frozen slice — and the committed rows
+      # still carry the last values written before the split, which seed it.
+      - name: Restore board state
+        uses: actions/cache/restore@v4
+        with:
+          path: state/board-state.json
+          key: board-state-${{ github.run_id }}
+          restore-keys: board-state-
+
+      # Workday requisition id -> resolved real location, for postings whose
+      # list view only shows a placeholder count ("6 Locations"). Permanent
+      # per-id cache; losing it just means re-resolving from scratch over the
+      # following runs' MULTILOC_MAX_PER_BOARD cap, nothing is lost.
+      - name: Restore multi-location cache
+        uses: actions/cache/restore@v4
+        with:
+          path: state/multiloc.json
+          key: multiloc-${{ github.run_id }}
+          restore-keys: multiloc-
+
       # Tiny (one boolean per ATS) — only exists so outage_started/outage_recovered
       # below fire on transitions, not on every run of an ongoing outage.
       - name: Restore outage state
@@ -141,6 +165,20 @@ jobs:
         with:
           path: state/seen.json
           key: seen-${{ github.run_id }}
+
+      - name: Save board state
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/board-state.json
+          key: board-state-${{ github.run_id }}
+
+      - name: Save multi-location cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state/multiloc.json
+          key: multiloc-${{ github.run_id }}
 
       - name: Save outage state
         uses: actions/cache/save@v4
