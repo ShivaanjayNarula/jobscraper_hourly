@@ -1,105 +1,105 @@
-name: outreach
+# name: outreach
 
-# The cold-email batch builder, deployed. Trigger with the green
-# "Run workflow" button (or POST a workflow_dispatch) and the fresh batch is
-# published to a PRIVATE data repo, from which the Vercel site serves it at
-# /api/outreach/page?k=<key>. Card buttons hit /api/outreach/* routes which
-# record state back into that same private repo — the bookkeeping the
-# localhost server did, hosted.
-#
-# Nothing personal is committed to THIS repo. It is public, and the batch
-# contains real engineers' work addresses plus unsent draft text; see the
-# header of src/publish-outreach.ts for why that matters.
-#
-# Note: GitHub-hosted runners block outbound port 25, so SMTP verification
-# cannot run here and every address is tagged `unknown` on the page rather
-# than verified. Run `npm run outreach` locally when you want real verdicts —
-# cached verdicts in contacted.json are reused for 14 days, so a periodic
-# local run keeps most of the batch properly verified.
+# # The cold-email batch builder, deployed. Trigger with the green
+# # "Run workflow" button (or POST a workflow_dispatch) and the fresh batch is
+# # published to a PRIVATE data repo, from which the Vercel site serves it at
+# # /api/outreach/page?k=<key>. Card buttons hit /api/outreach/* routes which
+# # record state back into that same private repo — the bookkeeping the
+# # localhost server did, hosted.
+# #
+# # Nothing personal is committed to THIS repo. It is public, and the batch
+# # contains real engineers' work addresses plus unsent draft text; see the
+# # header of src/publish-outreach.ts for why that matters.
+# #
+# # Note: GitHub-hosted runners block outbound port 25, so SMTP verification
+# # cannot run here and every address is tagged `unknown` on the page rather
+# # than verified. Run `npm run outreach` locally when you want real verdicts —
+# # cached verdicts in contacted.json are reused for 14 days, so a periodic
+# # local run keeps most of the batch properly verified.
 
-on:
-  workflow_dispatch:
-  # Hourly, at :30 past each hour (was once/day at 03:30 UTC = 09:00 IST).
-  # The build itself only refreshes what's on the page — sending is still a
-  # manual click per card via /api/outreach/*, so hourly does not mean 24x the
-  # mail. What it actually buys: the triggered lane (a role that opened in the
-  # last TRIGGER_WINDOW_DAYS) used to wait up to a day to appear at all; now it
-  # can show up within the hour, which is the entire point of having a
-  # "triggered" lane instead of just "random". The random/follow-up lanes stay
-  # governed by the same daily seed and dedup-against-contacted-state as
-  # before, so an hourly rebuild mostly just picks up newly-eligible
-  # candidates rather than reshuffling the same list every run. Actions
-  # cron is UTC-only and best-effort — see hunt.yml's cron comment for the
-  # measured degradation; this workflow is far cheaper per run (no board
-  # polling) so it is not chasing the same freshness SLA and one dropped hour
-  # costs nothing.
-  schedule:
-    - cron: '30 * * * *'
+# on:
+#   workflow_dispatch:
+#   # Hourly, at :30 past each hour (was once/day at 03:30 UTC = 09:00 IST).
+#   # The build itself only refreshes what's on the page — sending is still a
+#   # manual click per card via /api/outreach/*, so hourly does not mean 24x the
+#   # mail. What it actually buys: the triggered lane (a role that opened in the
+#   # last TRIGGER_WINDOW_DAYS) used to wait up to a day to appear at all; now it
+#   # can show up within the hour, which is the entire point of having a
+#   # "triggered" lane instead of just "random". The random/follow-up lanes stay
+#   # governed by the same daily seed and dedup-against-contacted-state as
+#   # before, so an hourly rebuild mostly just picks up newly-eligible
+#   # candidates rather than reshuffling the same list every run. Actions
+#   # cron is UTC-only and best-effort — see hunt.yml's cron comment for the
+#   # measured degradation; this workflow is far cheaper per run (no board
+#   # polling) so it is not chasing the same freshness SLA and one dropped hour
+#   # costs nothing.
+#   schedule:
+#     - cron: '30 * * * *'
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
-concurrency:
-  group: outreach
-  cancel-in-progress: false
+# concurrency:
+#   group: outreach
+#   cancel-in-progress: false
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
+#           cache: npm
 
-      - run: npm ci || npm install
+#       - run: npm ci || npm install
 
-      # Pull live click-state so follow-up scheduling and dedup continue across
-      # builds. This decodes the Contents API's base64 envelope properly — a
-      # plain curl of that endpoint writes the envelope itself, which parses as
-      # valid JSON of the wrong shape and silently destroys the state.
-      - name: Restore contacted state
-        env:
-          OUTREACH_DATA_REPO: ${{ vars.OUTREACH_DATA_REPO }}
-          OUTREACH_GH_TOKEN: ${{ secrets.OUTREACH_GH_TOKEN }}
-        run: npm run publish-outreach -- --pull
+#       # Pull live click-state so follow-up scheduling and dedup continue across
+#       # builds. This decodes the Contents API's base64 envelope properly — a
+#       # plain curl of that endpoint writes the envelope itself, which parses as
+#       # valid JSON of the wrong shape and silently destroys the state.
+#       - name: Restore contacted state
+#         env:
+#           OUTREACH_DATA_REPO: ${{ vars.OUTREACH_DATA_REPO }}
+#           OUTREACH_GH_TOKEN: ${{ secrets.OUTREACH_GH_TOKEN }}
+#         run: npm run publish-outreach -- --pull
 
-      # src/outreach.ts reads the catalogue from data/jobs.json, but the hourly
-      # hunt publishes the live catalogue to the orphan `data` branch — the copy
-      # committed on main is a one-off snapshot that nobody refreshes. It was
-      # nine days stale when this was found, and since the triggered lane keys on
-      # postedAgeDays() <= 7, every single build reported "0 triggered": the lane
-      # that exists to react to a role opening had been dead since the snapshot
-      # was committed. Pull the real one first.
-      - name: Fetch the live catalogue from the data branch
-        run: |
-          mkdir -p data
-          curl -fsSL --retry 3 -o data/jobs.json "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/data/jobs.json"
-          # Fail loudly rather than build a batch off a truncated or 404 body:
-          # an empty catalogue silently produces an empty batch that looks fine.
-          node --input-type=module -e "
-            const j = JSON.parse(await (await import('node:fs/promises')).readFile('data/jobs.json', 'utf8'));
-            if (!Array.isArray(j) || j.length === 0) throw new Error('catalogue empty or wrong shape');
-            console.log('catalogue: ' + j.length + ' entries');
-          "
+#       # src/outreach.ts reads the catalogue from data/jobs.json, but the hourly
+#       # hunt publishes the live catalogue to the orphan `data` branch — the copy
+#       # committed on main is a one-off snapshot that nobody refreshes. It was
+#       # nine days stale when this was found, and since the triggered lane keys on
+#       # postedAgeDays() <= 7, every single build reported "0 triggered": the lane
+#       # that exists to react to a role opening had been dead since the snapshot
+#       # was committed. Pull the real one first.
+#       - name: Fetch the live catalogue from the data branch
+#         run: |
+#           mkdir -p data
+#           curl -fsSL --retry 3 -o data/jobs.json "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/data/jobs.json"
+#           # Fail loudly rather than build a batch off a truncated or 404 body:
+#           # an empty catalogue silently produces an empty batch that looks fine.
+#           node --input-type=module -e "
+#             const j = JSON.parse(await (await import('node:fs/promises')).readFile('data/jobs.json', 'utf8'));
+#             if (!Array.isArray(j) || j.length === 0) throw new Error('catalogue empty or wrong shape');
+#             console.log('catalogue: ' + j.length + ' entries');
+#           "
 
-      - name: Build batch
-        env:
-          OUTREACH_LINK_BASE: ${{ vars.OUTREACH_LINK_BASE }}
-          OUTREACH_KEY: ${{ secrets.OUTREACH_KEY }}
-          # contacts.ts's gh() reads this to raise the GitHub API cap from
-          # 60/hr unauth to 5000/hr. The runner-provided token already exists
-          # per job with read access to public repos — no new secret needed.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run outreach -- --static
+#       - name: Build batch
+#         env:
+#           OUTREACH_LINK_BASE: ${{ vars.OUTREACH_LINK_BASE }}
+#           OUTREACH_KEY: ${{ secrets.OUTREACH_KEY }}
+#           # contacts.ts's gh() reads this to raise the GitHub API cap from
+#           # 60/hr unauth to 5000/hr. The runner-provided token already exists
+#           # per job with read access to public repos — no new secret needed.
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         run: npm run outreach -- --static
 
-      - name: Publish batch to the private data repo
-        env:
-          OUTREACH_DATA_REPO: ${{ vars.OUTREACH_DATA_REPO }}
-          OUTREACH_GH_TOKEN: ${{ secrets.OUTREACH_GH_TOKEN }}
-        run: npm run publish-outreach -- --push
+#       - name: Publish batch to the private data repo
+#         env:
+#           OUTREACH_DATA_REPO: ${{ vars.OUTREACH_DATA_REPO }}
+#           OUTREACH_GH_TOKEN: ${{ secrets.OUTREACH_GH_TOKEN }}
+#         run: npm run publish-outreach -- --push
 
-      - name: Where to read it
-        run: echo "Open ${{ vars.OUTREACH_LINK_BASE }}/outreach/page?k=<your OUTREACH_KEY>"
+#       - name: Where to read it
+#         run: echo "Open ${{ vars.OUTREACH_LINK_BASE }}/outreach/page?k=<your OUTREACH_KEY>"
