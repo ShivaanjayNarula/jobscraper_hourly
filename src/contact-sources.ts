@@ -154,6 +154,113 @@ export async function websiteContacts(siteUrl: string, companyName: string): Pro
   return [...out.values()];
 }
 
+// ── 2b. Leadership page — a named senior contact, when git/npm find nobody ──
+
+export interface LeadershipContact {
+  name: string;
+  title: string;
+}
+
+const LEADERSHIP_PATHS = ['/about', '/about-us', '/company', '/company/about', '/company/leadership', '/leadership', '/team'];
+
+/**
+ * Engineering-tier titles are checked first and preferred over the exec
+ * tier below — a fresher/junior engineer's cold email reads as a natural
+ * peer-adjacent ask to a CTO or engineering manager, and as a seniority
+ * mismatch to a CEO. Both tiers live on the same page in practice, so one
+ * scrape covers both; only the ranking at the end decides which one ships.
+ */
+const ENGINEERING_TITLE =
+  /\b(CTO|Chief Technology Officer|VP\s*,?\s*Engineering|Vice President\s*,?\s*Engineering|Head of Engineering|Engineering Manager|Director of Engineering)\b/i;
+const EXEC_TITLE = /\b(CEO|Chief Executive Officer|Co-?Founder|Founder|President)\b/i;
+const TITLE_RE = new RegExp(`(?:${ENGINEERING_TITLE.source})|(?:${EXEC_TITLE.source})`, 'i');
+
+// 2-3 capitalized words, nothing longer — long enough for "Sridhar Vembu" or
+// "Mary Jo Watson", short enough to reject a sentence that happens to start
+// with a capital ("The Government of India has bestowed...").
+const NAME_RE = /^[A-Z][a-zA-Z.'-]{1,20}(?:\s+[A-Z][a-zA-Z.'-]{1,20}){1,2}$/;
+
+/**
+ * HTML to text that keeps block-element boundaries as line breaks, unlike
+ * `toPlainText` (workday.ts) which collapses everything to one run-on
+ * string. A name and its title almost always sit in separate DOM elements
+ * (`<h3>Name</h3><p>Title</p>`), so collapsing them loses the only signal
+ * that says which word-pair goes together — measured directly: naive
+ * regex-on-collapsed-text found zero real name+title pairs across a sample
+ * of real leadership pages that block-aware line splitting found cleanly.
+ */
+function blockAwareLines(html: string): string[] {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<(br|\/p|\/div|\/h[1-6]|\/li|\/tr|\/td)\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Pure extraction, exported for fixture testing without a network call. A
+ * title line is checked against its immediate neighbours for a name-shaped
+ * line — most layouts put the title directly after the name, some before.
+ */
+export function extractLeadership(html: string): LeadershipContact[] {
+  const lines = blockAwareLines(html);
+  const found = new Map<string, LeadershipContact>();
+  for (let i = 0; i < lines.length; i++) {
+    const title = lines[i]!;
+    if (title.length > 60 || !TITLE_RE.test(title)) continue;
+    for (const cand of [lines[i - 1], lines[i + 1]]) {
+      if (cand && NAME_RE.test(cand) && !TITLE_RE.test(cand) && !found.has(cand)) {
+        found.set(cand, { name: cand, title });
+        break;
+      }
+    }
+  }
+  // Engineering-tier titles first — see the comment on ENGINEERING_TITLE above.
+  return [...found.values()].sort(
+    (a, b) => Number(!ENGINEERING_TITLE.test(a.title)) - Number(!ENGINEERING_TITLE.test(b.title)),
+  );
+}
+
+/**
+ * A named senior contact from the company's own "about"/"leadership" page —
+ * a fallback for when git/npm/PyPI/Maven found nobody at all, not a
+ * replacement for a real commit author. Plain `fetch` only: a page that
+ * renders its team list client-side (common among modern SPA marketing
+ * sites) returns nothing here rather than paying for a headless browser on
+ * every company — that escalation is deliberately not built until a real
+ * measured need shows up, same rule `curlJson`'s doc comment states for
+ * Workday's curl fallback.
+ */
+export async function leadershipContacts(siteUrl: string): Promise<LeadershipContact[]> {
+  const base = new URL(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`);
+  const found = new Map<string, LeadershipContact>();
+  for (const path of LEADERSHIP_PATHS) {
+    try {
+      const res = await fetch(new URL(path, base).toString(), {
+        headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        signal: AbortSignal.timeout(8_000),
+        redirect: 'follow',
+      });
+      const type = res.headers.get('content-type') ?? '';
+      if (!res.ok || !type.includes('html')) continue;
+      for (const hit of extractLeadership(await res.text())) {
+        if (!found.has(hit.name)) found.set(hit.name, hit);
+      }
+    } catch {
+      continue; // Dead path or blocked page; the other paths still count.
+    }
+  }
+  return [...found.values()].sort(
+    (a, b) => Number(!ENGINEERING_TITLE.test(a.title)) - Number(!ENGINEERING_TITLE.test(b.title)),
+  );
+}
+
 // ── 3. Role addresses ────────────────────────────────────────────────────────
 
 export const ROLE_MAILBOXES = ['careers', 'jobs', 'hiring', 'talent', 'hr', 'recruit'] as const;
@@ -325,6 +432,46 @@ export async function mavenContacts(company: string, limit = 10): Promise<MavenC
     }
   }
   return [...byEmail.values()];
+}
+
+// ── 2d. SmartRecruiters requisition creators ─────────────────────────────────
+
+export interface SmartRecruitersCreator {
+  name: string;
+  jobTitle: string;
+  postingUrl: string;
+}
+
+/**
+ * Every SmartRecruiters posting publicly names the person who created the
+ * requisition (`creator.name`) — live-verified 2026-09-02 against a real
+ * board (Werner & Mertz GmbH → "Carolin Reichert"), no auth, same list call
+ * the fetcher already makes for job data itself.
+ *
+ * This is a name, never an address — unlike npm/PyPI/Maven, SmartRecruiters
+ * has nothing resembling an email field anywhere in the public API. A name
+ * alone is useless without a domain and address pattern to attach it to, so
+ * callers must already know both (from the git source) before this is worth
+ * calling; `resolveRecipients()` does exactly that, applying `applyPattern()`
+ * to turn each name here into a candidate address.
+ */
+export async function smartRecruitersCreators(token: string, limit = 10): Promise<SmartRecruitersCreator[]> {
+  const data = (await getJson(
+    `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(token)}/postings?limit=100`,
+  )) as { content?: { name?: string; id?: string; creator?: { name?: string } }[] };
+
+  const byName = new Map<string, SmartRecruitersCreator>();
+  for (const p of data.content ?? []) {
+    const name = p.creator?.name?.trim();
+    if (!name || byName.has(name)) continue;
+    byName.set(name, {
+      name,
+      jobTitle: p.name ?? '',
+      postingUrl: p.id ? `https://jobs.smartrecruiters.com/${token}/${p.id}` : '',
+    });
+    if (byName.size >= limit) break;
+  }
+  return [...byName.values()];
 }
 
 // ── 7. ApplyBolt public endpoint ─────────────────────────────────────────────
