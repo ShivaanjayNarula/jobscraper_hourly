@@ -1,5 +1,5 @@
 import { appendFile, mkdir, writeFile } from 'node:fs/promises';
-import type { Company, Job, RawJob } from './types.js';
+import type { BoardState, Company, Job, RawJob } from './types.js';
 import { FETCHERS } from './fetchers/index.js';
 import { mapLimit, mapLimitByKey } from './fetchers/util.js';
 import { classify } from './classify.js';
@@ -7,12 +7,16 @@ import { isFreshEnough, locationMatches, normalizeForDedup, preScreen, shouldAle
 import { renderEmail, subject } from './email.js';
 import { rampingCompanies } from './trends.js';
 import { updateCatalog, type CatalogEntry } from './catalog.js';
-import { CONCURRENCY, BLOCK_HOLD_DAYS, DROP_AFTER_FAILING_DAYS, HOST_CONCURRENCY } from './config.js';
+import { CONCURRENCY, BLOCK_HOLD_DAYS, DROP_AFTER_FAILING_DAYS, HOST_CONCURRENCY, MULTILOC_MAX_PER_BOARD } from './config.js';
 import { BlockError, type BlockKind } from './fetchers/block.js';
+import { boardKey } from './board-url.js';
+import { resolvePlaceholderLocations } from './fetchers/workday.js';
 import {
   loadCompanies,
+  loadBoardState,
   loadBoardVolumes,
   loadHostHistory,
+  loadMultiLocations,
   loadOutageState,
   loadReposts,
   loadSeen,
@@ -20,13 +24,16 @@ import {
   readJson,
   recordFailure,
   recordSuccess,
+  saveBoardState,
   saveBoardVolumes,
   saveCompanies,
   saveHostHistory,
+  saveMultiLocations,
   saveOutageState,
   saveReposts,
   saveVolumeDrops,
   saveSeen,
+  seedBoardState,
   updateReposts,
 } from './state.js';
 import { extractSalary } from './salary.js';
@@ -80,10 +87,13 @@ function rateLimitKey(company: Company): string {
 const limitForHost = (key: string): number =>
   HOST_CONCURRENCY[key.split(':')[0]!] ?? HOST_CONCURRENCY.default!;
 
-async function pollBoard(company: Company): Promise<BoardResult> {
+async function pollBoard(company: Company, multiLocations: Record<string, string>): Promise<BoardResult> {
   const started = Date.now();
   try {
     const jobs = await FETCHERS[company.ats].list(company);
+    if (company.ats === 'workday') {
+      await resolvePlaceholderLocations(company, jobs, multiLocations, MULTILOC_MAX_PER_BOARD);
+    }
     return { company, jobs, durationMs: Date.now() - started };
   } catch (error) {
     const err = error as Error;
@@ -113,6 +123,14 @@ async function enrich(company: Company, job: RawJob): Promise<RawJob> {
 
 async function main(): Promise<void> {
   const companies = await loadCompanies();
+  /**
+   * Poll times and failure streaks live here rather than on the Company rows,
+   * so `companies.json` stops being rewritten every run. Seeded from the legacy
+   * fields for any board the state file doesn't know — the first run after the
+   * split, and any run after a cache eviction.
+   */
+  const boardState = seedBoardState(await loadBoardState(), companies);
+  const nextBoardState: BoardState = { ...boardState };
   const seen = await loadSeen();
   const previousOutage = await loadOutageState();
   const previousHostHistory = await loadHostHistory();
@@ -120,6 +138,7 @@ async function main(): Promise<void> {
   const repostIds = new Set<string>();
   const previousVolumeDrops: VolumeDropState = await loadVolumeDrops();
   const previousBoardVolumes = await loadBoardVolumes();
+  const multiLocations = await loadMultiLocations();
 
   /**
    * The seen state lives in the Actions cache, not in git — at ~150,000 live
@@ -137,12 +156,19 @@ async function main(): Promise<void> {
     }
   }
 
-  const selection = selectBoards(companies);
+  const selection = selectBoards(companies, boardState);
   console.log(
     `polling ${selection.polling.length} of ${companies.length} boards ` +
       `(${selection.hot} hot, ${selection.cold} cold on rotation, ${selection.skipped} waiting)`,
   );
-  const results = await mapLimitByKey(selection.polling, rateLimitKey, limitForHost, pollBoard);
+  const multiLocBefore = Object.keys(multiLocations).length;
+  const results = await mapLimitByKey(selection.polling, rateLimitKey, limitForHost, (c) =>
+    pollBoard(c, multiLocations),
+  );
+  const multiLocResolved = Object.keys(multiLocations).length - multiLocBefore;
+  if (multiLocResolved > 0) {
+    console.log(`resolved ${multiLocResolved} new workday multi-location postings (${multiLocBefore + multiLocResolved} cached total)`);
+  }
 
   const hostStats = summarizeHostStats(
     results.map((r): PollTiming => ({ key: rateLimitKey(r.company), durationMs: r.durationMs, error: r.error })),
@@ -162,10 +188,9 @@ async function main(): Promise<void> {
 
   // Silent partial-loss detection (see volume-stats.ts): only successful polls
   // carry evidence, and only boards polled this run are judged.
-  const volumeKey = (c: Company) => `${c.ats}:${c.token}:${c.site ?? ''}`;
   const volumeSamples = results
     .filter((r) => !r.error)
-    .map((r) => ({ key: volumeKey(r.company), count: r.jobs.length }));
+    .map((r) => ({ key: boardKey(r.company), count: r.jobs.length }));
   const polledVolumeKeys = new Set(volumeSamples.map((s) => s.key));
   const boardVolumes = updateVolumeHistory(previousBoardVolumes, volumeSamples);
   const volumeDrops = detectVolumeDrops(boardVolumes, polledVolumeKeys);
@@ -191,14 +216,34 @@ async function main(): Promise<void> {
    * silently deleted — and with rotation most of the corpus is missing from
    * any single run.
    */
-  const polledTokens = new Set(selection.polling.map((c) => `${c.ats}:${c.token}`));
-  const updatedCompanies: Company[] = companies.filter(
-    (c) => !polledTokens.has(`${c.ats}:${c.token}`),
-  );
+  const polledTokens = new Set(selection.polling.map(boardKey));
+  const updatedCompanies: Company[] = companies.filter((c) => !polledTokens.has(boardKey(c)));
   const dropped: string[] = [];
   const fresh: { company: Company; job: RawJob }[] = [];
-  const liveIds = new Set<string>();
+  /**
+   * Id -> the board's currently-reported posting date. A Set would be enough to
+   * decide "is this still open", but the date is what lets the catalogue notice
+   * an employer re-stamping an old requisition to look new. It has to be
+   * collected here, before the screening gate below, because a posting already
+   * in `seen` short-circuits out of the loop long before its refreshed date
+   * would otherwise be read.
+   */
+  const liveIds = new Map<string, string | undefined>();
   const polledBoards = new Set<string>();
+  /**
+   * Repost evidence, accumulated across every board and applied once after the
+   * loop. It used to be applied per board, which rebuilt the whole ~30k-entry
+   * repost state up to `BOARDS_PER_RUN` times a run — but the reason it had to
+   * move is correctness, not speed: a tenant's sites share one job-id space, so
+   * polling RTX's `search` site alone made `campus`'s ids look absent and
+   * stamped them `gone`, and they then came back flagged as reposts the moment
+   * `campus` was polled. Batching every polled board into one call means a
+   * tenant is only ever judged on the union of its sites' ids.
+   */
+  const polledPrefixes = new Set<string>();
+  const presentIds: string[] = [];
+  /** Successful polls per `ats:token`, for the closure guard below. */
+  const tenantPolls = new Map<string, number>();
   let totalSeen = 0;
   let screened = 0;
 
@@ -213,13 +258,13 @@ async function main(): Promise<void> {
   if (outageDelta.recovered) console.log('previously suspected outage has cleared');
 
   for (const { company, jobs, error, blockKind } of results) {
-    // Repost tracking is per-board: only a board we just polled gives evidence
-    // about which of its ids are still live (cold rotation means the others
-    // carry none). Collected across the inner loop, applied once after it.
-    const boardPrefix = `${company.ats}:${company.token}:`;
-    const boardIds: string[] = [];
+    // Only a board polled this run carries evidence about which of its ids are
+    // still live; cold rotation means every other board carries none. That is
+    // what `polledPrefixes` records.
+    const tenant = `${company.ats}:${company.token}`;
     if (error) {
-      const failed = recordFailure(company, nowIso);
+      const key = boardKey(company);
+      const failed = recordFailure(boardState[key], nowIso);
       const days = (Date.now() - new Date(failed.failingSince!).getTime()) / 86_400_000;
       console.warn(`  ! ${company.name}: ${error}`);
       /**
@@ -234,6 +279,7 @@ async function main(): Promise<void> {
       const heldByWall = blockKind !== undefined && days < BLOCK_HOLD_DAYS;
       if (days >= DROP_AFTER_FAILING_DAYS && !suspectedOutage.has(company.ats) && !heldByWall) {
         dropped.push(company.name);
+        delete nextBoardState[key];
       } else {
         if (heldByWall) {
           console.warn(
@@ -241,7 +287,8 @@ async function main(): Promise<void> {
               `eviction until day-${BLOCK_HOLD_DAYS}`,
           );
         }
-        updatedCompanies.push(failed);
+        nextBoardState[key] = failed;
+        updatedCompanies.push(company);
       }
       continue;
     }
@@ -253,17 +300,18 @@ async function main(): Promise<void> {
      * the gap between one req closing and the next opening.
      */
     const hasIndia = jobs.some((job) => locationMatches(job.location));
+    nextBoardState[boardKey(company)] = recordSuccess(nowIso);
     updatedCompanies.push({
-      ...recordSuccess(company),
-      lastPolledAt: nowIso,
+      ...company,
       ...(hasIndia || company.lastIndiaAt ? { lastIndiaAt: hasIndia ? nowIso : company.lastIndiaAt } : {}),
     });
     totalSeen += jobs.length;
-    polledBoards.add(`${company.ats}:${company.token}`);
+    tenantPolls.set(tenant, (tenantPolls.get(tenant) ?? 0) + 1);
+    polledPrefixes.add(`${tenant}:`);
 
     for (const job of jobs) {
       const id = `${company.ats}:${company.token}:${job.externalId}`;
-      liveIds.add(id);
+      liveIds.set(id, job.postedAt);
 
       /**
        * Screen BEFORE recording, not after. A posting that fails location or
@@ -277,7 +325,7 @@ async function main(): Promise<void> {
        */
       if (!preScreen(job, company)) continue;
       screened++;
-      boardIds.push(id);
+      presentIds.push(id);
       if (seen[id] && !testEmail) continue;
       // A previously-live id alerting again while stamped `gone` is a reopened
       // requisition — flagged on the job, not silently treated as brand-new.
@@ -285,7 +333,26 @@ async function main(): Promise<void> {
       seen[id] = nowIso;
       fresh.push({ company, job });
     }
-    reposts = updateReposts(reposts, boardIds, boardPrefix, nowIso);
+  }
+
+  reposts = updateReposts(reposts, presentIds, polledPrefixes, nowIso);
+
+  /**
+   * A tenant's postings may be spread across several sites that are separate
+   * rows in companies.json, and catalogue closure is decided per tenant because
+   * a job id carries no site. So a tenant only counts as polled when *every*
+   * row it has succeeded this run — otherwise polling RTX's `search` site while
+   * `REC_RTX_Ext_Gateway` sat out on cold rotation would mark every posting
+   * from the other site closed. Missing a closure for a run is recoverable;
+   * inventing one is not.
+   */
+  const tenantRows = new Map<string, number>();
+  for (const c of companies) {
+    const t = `${c.ats}:${c.token}`;
+    tenantRows.set(t, (tenantRows.get(t) ?? 0) + 1);
+  }
+  for (const [tenant, polls] of tenantPolls) {
+    if (polls === tenantRows.get(tenant)) polledBoards.add(tenant);
   }
 
   // Already screened above, so every fresh job is a candidate worth enriching —
@@ -352,6 +419,7 @@ async function main(): Promise<void> {
   // one of these postings as already-seen and stay silent.
   if (!dryRun && !testEmail) {
     await saveCompanies(updatedCompanies);
+    await saveBoardState(nextBoardState);
     const prunedCount = await saveSeen(seen);
     if (prunedCount) console.log(`pruned ${prunedCount} expired IDs`);
     await saveOutageState(outageStateFrom(suspectedOutage));
@@ -359,6 +427,7 @@ async function main(): Promise<void> {
     await saveReposts(reposts);
     await saveBoardVolumes(boardVolumes);
     await saveVolumeDrops(volumeDropStateFrom(volumeDrops));
+    await saveMultiLocations(multiLocations);
   }
 
   await mkdir('out', { recursive: true });
@@ -368,7 +437,8 @@ async function main(): Promise<void> {
     const catalog = await updateCatalog({ fresh: deduped, liveIds, polledBoards, now: nowIso });
     console.log(
       `catalog: ${catalog.open} open, ${catalog.closed} newly closed, ` +
-        `${catalog.reopened} reopened, ${catalog.pruned} pruned`,
+        `${catalog.reopened} reopened, ${catalog.pruned} pruned, ` +
+        `${catalog.bumped} date-bumped`,
     );
   }
 
