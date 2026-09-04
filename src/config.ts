@@ -49,9 +49,16 @@ export const EMAIL_DETAIL_LIMIT = 25;
  * has no early-mover advantage left. So the email only surfaces roles posted
  * within this window; older "new to us" discoveries still land in the
  * catalogue (nothing is dropped), they just don't masquerade as urgent.
- * Roles with no parseable posting date are always included — many ATSes
- * (Workday chief among them) never expose one at all, so absence of a date
- * cannot be treated as evidence of staleness.
+ * Roles with no parseable posting date are always included — some ATSes never
+ * expose one at all, so absence of a date cannot be treated as evidence of
+ * staleness.
+ *
+ * This used to name Workday as the chief offender. That was wrong, and it cost
+ * us: Workday does expose a date, as a relative label ("Posted 5 Days Ago"),
+ * and `workday.ts` was storing it raw so it never parsed. Every Workday role —
+ * 38% of the catalogue — took the benefit of the doubt this comment describes.
+ * Fixed by `parsePostedOn` in `fetchers/workday.ts`. Before assuming an ATS
+ * "has no dates", check whether we are simply failing to read the one it sends.
  */
 export const EMAIL_FRESHNESS_DAYS = 21;
 
@@ -93,6 +100,21 @@ export const CONCURRENCY = 9;
 export const BOARDS_PER_RUN = 8000;
 
 /**
+ * Cap on newly-resolved (uncached) placeholder-location Workday postings per
+ * board per run. Measured 2026-09-04: 13.6% of Workday jobs (22,398 of
+ * 164,389 across 907 hot boards) carry a placeholder like "6 Locations"
+ * instead of real place names, averaging ~24.7 per board — but that hides a
+ * long tail (a large multi-site employer can carry hundreds). Each
+ * resolution is one extra detail request inside that board's own poll turn,
+ * so an uncapped board with hundreds of them would hog its shared per-pod
+ * concurrency slot (HOST_CONCURRENCY.workday) far longer than every other
+ * board sharing that pod. The rest catch up over following runs — the cache
+ * is permanent, so nothing is lost, just deferred. Re-measure actual added
+ * wall-clock before raising.
+ */
+export const MULTILOC_MAX_PER_BOARD = 20;
+
+/**
  * Per-rate-limit-domain concurrency. Total throughput is now the sum across
  * domains rather than one global number, so this is much faster than the old
  * flat CONCURRENCY while being *gentler* on any single host.
@@ -110,6 +132,7 @@ export const HOST_CONCURRENCY: Record<string, number> = {
   lever: 6,
   smartrecruiters: 6,
   oracle: 4,
+  workable: 6,
   successfactors: 2, // its XML feeds take 30-170s each; parallelism here buys nothing
   default: 4,
 };
@@ -164,7 +187,7 @@ export const REGION_LOCKED =
 
 /** Mass-hiring IT services firms — excluded by request. */
 export const SERVICE_COMPANIES =
-  /\b(tcs|tata consultancy|infosys|wipro|cognizant|accenture|capgemini|hcl|hcltech|tech mahindra|ltimindtree|mphasis|hexaware|birlasoft|coforge|persistent systems|zensar|mindtree|dxc|atos|virtusa|ust global|quess|randstad|adecco|genpact|firstsource|wns global|conduent|concentrix|teleperformance)\b/i;
+  /\b(tcs|tata consultancy|infosys|wipro|cognizant|accenture|capgemini|hcl|hcltech|tech mahindra|ltimindtree|mphasis|hexaware|birlasoft|coforge|persistent systems|zensar|mindtree|dxc|atos|virtusa|ust global|quess|randstad|adecco|manpower|delta capita|genpact|firstsource|wns global|conduent|concentrix|teleperformance)\b/i;
 
 /**
  * A role only alerts if its title matches one of these families.
