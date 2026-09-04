@@ -8,6 +8,9 @@ interface SrPosting {
   location?: { city?: string; region?: string; country?: string; remote?: boolean };
   experienceLevel?: { label?: string };
   typeOfEmployment?: { label?: string };
+  /** The requisition's creator — a real name, public, unauthenticated, no
+   *  extra call needed (already present on this same list response). */
+  creator?: { name?: string };
 }
 
 const PAGE_SIZE = 100;
@@ -44,6 +47,7 @@ export async function list(company: Company): Promise<RawJob[]> {
         url: `https://jobs.smartrecruiters.com/${company.token}/${p.id}`,
         postedAt: p.releasedDate,
         text: [p.experienceLevel?.label, p.typeOfEmployment?.label].filter(Boolean).join(' '),
+        postedBy: p.creator?.name,
       });
     }
 
