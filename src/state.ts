@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { Company, SeenState } from './types.js';
+import type { BoardState, BoardStatus, Company, SeenState } from './types.js';
+import { boardKey } from './board-url.js';
 import type { OutageState } from './outage.js';
 import type { HostHistory } from './host-stats.js';
 import { SEEN_RETENTION_DAYS, REPOST_WINDOW_DAYS } from './config.js';
@@ -27,7 +28,40 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 
 export const loadSeen = () => readJson<SeenState>(SEEN_PATH, {});
 export const loadCompanies = () => readJson<Company[]>(COMPANIES_PATH, []);
-export const saveCompanies = (c: Company[]) => writeJson(COMPANIES_PATH, c);
+
+/**
+ * `lastPolledAt` and `failingSince` are stripped on the way out: they now live
+ * in `state/board-state.json`. Leaving them here would keep rewriting up to
+ * `BOARDS_PER_RUN` rows of a committed file every run, which is the whole thing
+ * this split exists to stop. The first save after the split is a large one-off
+ * diff removing both fields from every row; after that the file goes quiet.
+ */
+export const saveCompanies = (companies: Company[]) =>
+  writeJson(
+    COMPANIES_PATH,
+    companies.map(({ lastPolledAt: _polled, failingSince: _failing, ...rest }) => rest),
+  );
+
+const BOARD_STATE_PATH = 'state/board-state.json';
+export const loadBoardState = () => readJson<BoardState>(BOARD_STATE_PATH, {});
+export const saveBoardState = (state: BoardState) => writeJson(BOARD_STATE_PATH, state);
+
+/**
+ * Fill in any board the state file has never heard of from the legacy fields
+ * still on its `Company` row. One mechanism covers two cases: the first run
+ * after the split, and an evicted Actions cache. In both, whatever was last
+ * committed to `companies.json` is a better starting point than declaring the
+ * entire corpus never-polled — though that fallback is safe too.
+ */
+export function seedBoardState(state: BoardState, companies: readonly Company[]): BoardState {
+  const seeded: BoardState = { ...state };
+  for (const company of companies) {
+    const key = boardKey(company);
+    if (seeded[key] || !(company.lastPolledAt || company.failingSince)) continue;
+    seeded[key] = { lastPolledAt: company.lastPolledAt, failingSince: company.failingSince };
+  }
+  return seeded;
+}
 
 /** Tiny — one boolean per ATS — so it rides in the same cache as seen.json. */
 export const loadOutageState = () => readJson<OutageState>(OUTAGE_PATH, {});
@@ -50,17 +84,53 @@ export const loadBoardVolumes = () => readJson<VolumeHistory>(BOARD_VOLUMES_PATH
 export const saveBoardVolumes = (history: VolumeHistory) => writeJson(BOARD_VOLUMES_PATH, history);
 
 /**
- * Repost bookkeeping for one board (see the function comment below for why
- * scoping to a single polled board matters).
+ * Workday requisition id -> its resolved real location, for postings whose
+ * list view only ever shows a placeholder ("6 Locations"). A requisition's
+ * location list doesn't change over its lifetime, so this is a permanent
+ * cache, not a rolling window like seen.json — resolved once, reused forever.
  */
-export function updateReposts(state: RepostState, presentIds: Iterable<string>, prefix: string, nowIso: string): RepostState {
+const MULTILOC_PATH = 'state/multiloc.json';
+export const loadMultiLocations = () => readJson<Record<string, string>>(MULTILOC_PATH, {});
+export const saveMultiLocations = (m: Record<string, string>) => writeJson(MULTILOC_PATH, m);
+
+/**
+ * Is this job id under one of the tenant prefixes polled this run?
+ *
+ * Prefixes are `${ats}:${token}:`, but the token itself can contain colons —
+ * Zoho Recruit stores a whole board URL there — so the prefix boundary cannot
+ * be found by splitting. Instead every colon position in the id is offered to
+ * the set, which is a handful of lookups per id rather than a scan over every
+ * polled prefix.
+ *
+ * This trusts the set to hold only whole `ats:token:` prefixes built from real
+ * rows. A bare `ats:` in there would match every id on that platform; nothing
+ * constructs one, because no row has an empty token.
+ */
+function underPolledBoard(id: string, prefixes: Set<string>): boolean {
+  for (let i = id.indexOf(':'); i !== -1; i = id.indexOf(':', i + 1)) {
+    if (prefixes.has(id.slice(0, i + 1))) return true;
+  }
+  return false;
+}
+
+/**
+ * Repost bookkeeping for every board polled this run, in one pass.
+ *
+ * Takes the whole run's ids and prefixes together rather than one board at a
+ * time. A tenant's sites are separate rows but share a single job-id space, so
+ * judging one site in isolation makes its siblings' ids look absent and stamps
+ * them `gone` — they then return flagged as reposts when the sibling is polled.
+ * One call over the union cannot make that mistake, and it rebuilds the state
+ * object once instead of once per board.
+ */
+export function updateReposts(state: RepostState, presentIds: Iterable<string>, prefixes: Set<string>, nowIso: string): RepostState {
   const next: RepostState = {};
   const cutoff = Date.now() - REPOST_WINDOW_DAYS * 86_400_000;
   const seenPresent = new Set(presentIds);
   for (const [id, entry] of Object.entries(state)) {
     // Boards not polled this run carry no evidence either way — only entries
-    // under this board's prefix may be stamped, refreshed, or pruned.
-    if (!id.startsWith(prefix)) {
+    // under a polled board's prefix may be stamped, refreshed, or pruned.
+    if (!underPolledBoard(id, prefixes)) {
       next[id] = entry;
       continue;
     }
@@ -96,12 +166,19 @@ export async function saveSeen(seen: SeenState): Promise<number> {
   return Object.keys(seen).length - Object.keys(pruned).length;
 }
 
-/** Tokens rot when companies rename or migrate ATS. Track it, don't guess. */
-export function recordFailure(company: Company, nowIso: string): Company {
-  return { ...company, failingSince: company.failingSince ?? nowIso };
+/**
+ * Tokens rot when companies rename or migrate ATS. Track it, don't guess.
+ *
+ * `lastPolledAt` is deliberately carried through unchanged on a failure: a
+ * board that errored keeps its old poll date, so it sorts early in the cold
+ * rotation and gets another attempt soon rather than going to the back of a
+ * five-figure queue.
+ */
+export function recordFailure(previous: BoardStatus | undefined, nowIso: string): BoardStatus {
+  return { lastPolledAt: previous?.lastPolledAt, failingSince: previous?.failingSince ?? nowIso };
 }
 
-export function recordSuccess(company: Company): Company {
-  const { failingSince: _drop, ...rest } = company;
-  return rest;
+/** A clean poll: stamp the time and end any failure streak. */
+export function recordSuccess(nowIso: string): BoardStatus {
+  return { lastPolledAt: nowIso };
 }
