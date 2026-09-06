@@ -100134,5 +100134,42 @@
     "site": "Momentive_External_Careers",
     "industry": "tech",
     "source": "discovered"
+  },
+  {
+    "name": "Aries.com",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "aries"
+  },
+  {
+    "name": "Neighborhoods.com",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "neighborhoodscom"
+  },
+  {
+    "name": "NewsBreak",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "newsbreak"
+  },
+  {
+    "name": "Teladoc",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "teladoc",
+    "host": "wd503",
+    "site": "teladochealth_is_hiring"
+  },
+  {
+    "name": "Zynga Early Careers",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "zyngaearlycareers"
   }
 ]
