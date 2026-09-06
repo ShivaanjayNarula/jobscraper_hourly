@@ -100097,5 +100097,42 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-09-06T08:01:20.349Z"
+  },
+  {
+    "name": "asigovernment",
+    "ats": "greenhouse",
+    "token": "asigovernment",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "encord",
+    "ats": "ashby",
+    "token": "encord",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "epsilon-health",
+    "ats": "ashby",
+    "token": "epsilon-health",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "feldera",
+    "ats": "ashby",
+    "token": "feldera",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "communitybrands",
+    "ats": "workday",
+    "token": "communitybrands",
+    "host": "wd1",
+    "site": "Momentive_External_Careers",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
