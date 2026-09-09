@@ -6,9 +6,21 @@ import { selectBoards } from './select-boards.js';
 import { epochToIso } from './fetchers/eightfold.js';
 import { safeIso } from './fetchers/darwinbox.js';
 import { toIso as recruiteeToIso } from './fetchers/recruitee.js';
+import { place as teamtailorPlace } from './fetchers/teamtailor.js';
+import { place as breezyPlace } from './fetchers/breezy.js';
+import { parsePositions, place as personioPlace } from './fetchers/personio.js';
+import { normalizeLocation, pageCount, parsePortal } from './fetchers/icims.js';
+import { locationColumns, parseRows as parseTaleoRows } from './fetchers/taleo.js';
 import { isPlaceholderLocation, parsePostedOn, parseRobotsSites } from './fetchers/workday.js';
 import { refreshedPostedAt } from './catalog.js';
-import { boardKey } from './board-url.js';
+import { boardKey, NO_ADAPTER, parseBoardUrl } from './board-url.js';
+import { limitForHost, rateLimitKey } from './config.js';
+import { mapLimitByKey } from './fetchers/util.js';
+import { csvFields, unfedPlatforms } from './bulk-import.js';
+import { untrackedSlugs } from './open-jobs-slugs.js';
+import { bareDomain } from './yc-directory.js';
+import { place as ukgPlace } from './fetchers/ukg.js';
+import { FETCHERS } from './fetchers/index.js';
 import { BlockError, classifyFailure, classifyOkBody } from './fetchers/block.js';
 import { summarizeHostStats, updateHistory, persistentlySlow } from './host-stats.js';
 import {
@@ -22,7 +34,15 @@ import {
   isTrivialCommit,
   factScore,
 } from './contacts.js';
-import { bodySimilarity, bounceGateDecision, displayName, domainRiskTally, isTriggered, postedAgeDays, renderBody, touchGap, TRIGGER_WINDOW_DAYS } from './outreach.js';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mergeState } from './publish-outreach.js';
+import { alreadySent } from './outreach-send.js';
+import { readJson } from './state.js';
+import { EventEmitter } from 'node:events';
+import { readReply } from './verify-email.js';
+import { SIGNATURE } from './outreach.js';
+import { cleanSubject, commitKind, connectQuota, connectTier, factLine, followUpLine, groupConnects, hookKey, linkedinSearchUrl, mergePool, poolToBatch, registryFactLine, section, variablePart, weeklyConnects } from './outreach.js';
+import { bodySimilarity, bounceGateDecision, buildFirstDraft, displayName, domainRiskTally, enforceSimilarity, isTriggered, loadCompanyPool, postedAgeDays, renderBody, touchGap, TRIGGER_WINDOW_DAYS, type CatalogJob } from './outreach.js';
 import { applyboltLookup, extractEmails, extractLeadership, packageNameCandidates, parseApplyBolt, parseDmarcRua, roleAddresses } from './contact-sources.js';
 import { controlAddress, mxProvider, rejectionIsMeaningful } from './verify-email.js';
 import type { BoardState, Company, Industry, RawJob } from './types.js';
@@ -887,7 +907,456 @@ const sample = renderBody({
   passAlong: 'If this isn\'t yours, who should it go to?',
 });
 check('body carries the fact', sample.includes('partial-fill race'), true);
-check('body carries the signature', sample.includes('— SM'), true);
+// Asserted against the constant, not a hard-coded name: the default signature
+// changed once already and this check silently pinned the old value.
+check('body carries the signature', sample.includes(`— ${SIGNATURE}`), true);
+// Every mail must say who is writing and offer a way out — both were missing
+// entirely until 2026-09-07, so the recipient met an unnamed stranger quoting
+// their commit with nobody to reply to. OUTREACH-DESIGN.md §3/§7 mandate both,
+// constant across every touch.
+check('body identifies the sender', sample.includes('BE CSE'), true);
+check('body carries the opt-out', sample.includes('Tell me to stop'), true);
+
+// The fact line is git-only. Every other rung of the ladder (npm, PyPI, Maven,
+// website, leadership) has no commit subject, and the unconditional template
+// opened those mails with `Saw your recent commit — "undefined".` — a broken
+// merge claiming a commit the recipient never made.
+const factlessJob: CatalogJob = {
+  id: 'greenhouse:acme:1',
+  title: 'Analytics Engineer',
+  company: 'meesho',
+  location: 'Bengaluru',
+  url: 'https://example.com/job/1',
+};
+const factless = buildFirstDraft(factlessJob, { name: 'Priya Nair', email: 'priya.nair@meesho.com', source: 'npm' });
+check('factless draft never says undefined', factless.body.includes('undefined'), false);
+// splitName() lowercases for email local parts, so the greeting used to read
+// "Hey max," on every mail this tool has ever drafted.
+check(
+  'the greeting capitalises a lowercased commit-author name',
+  buildFirstDraft(factlessJob, { name: 'max mansfield', email: 'max.mansfield@zoom.us' }).body.startsWith('Hi Max,') ||
+    buildFirstDraft(factlessJob, { name: 'max mansfield', email: 'max.mansfield@zoom.us' }).body.startsWith('Hello Max,') ||
+    buildFirstDraft(factlessJob, { name: 'max mansfield', email: 'max.mansfield@zoom.us' }).body.startsWith('Hey Max,'),
+  true,
+);
+check('factless draft claims no commit', /recent commit|your commit|your push/i.test(factless.body), false);
+// "a Analytics Engineer" is the mail-merge tell that reframes the whole message
+// as machine-written.
+check('article agrees with a vowel-initial title', factless.body.includes('an Analytics Engineer'), true);
+check(
+  'article agrees with a consonant-initial title',
+  buildFirstDraft({ ...factlessJob, title: 'Software Engineer I' }, { name: 'Priya Nair', email: 'priya.nair@meesho.com' }).body.includes(
+    'a Software Engineer I',
+  ),
+  true,
+);
+
+// The similarity guard's real threshold is 0.8, not the 0.6 this suite used to
+// assert — so the same-company twin case its own comment claimed to protect
+// was scoring 0.750 and shipping. Both numbers below are measured, not chosen.
+check('same-company twins are actually blocked', enforceSimilarity([{ body: twinA }, { body: twinB }]).kept.length, 1);
+check('cross-company bodies survive the guard', bodySimilarity(twinA, sample) < 0.8, true);
+
+// A merely-drafted contact is not a mailed one. syncVerdicts() writes an entry
+// for every card it renders, so keying dedup on presence made one hourly build
+// exclude every company it displayed — permanently, with nothing sent.
+const poolJobs: CatalogJob[] = [
+  { id: 'greenhouse:acme:1', title: 'SDE II', company: 'Acme', url: 'https://x/1' },
+  { id: 'greenhouse:globex:1', title: 'SDE I', company: 'Globex', url: 'https://x/2' },
+];
+const contactState = (company: string, touch: number, skipped = false) => ({
+  company,
+  role: 'x',
+  jobUrl: '',
+  touch,
+  sentAt: touch > 0 ? ['2026-09-01T00:00:00Z'] : [],
+  nextDueAt: '',
+  subject: 's',
+  skipped,
+});
+const named = (jobs: ReturnType<typeof loadCompanyPool>) => jobs.map((t) => t.company).sort().join(',');
+check(
+  'a drafted-but-unsent contact keeps its company in the pool',
+  named(loadCompanyPool(poolJobs, { 'a@acme.com': contactState('Acme', 0) })),
+  'Acme,Globex',
+);
+check(
+  'an actually-mailed contact retires its company',
+  named(loadCompanyPool(poolJobs, { 'a@acme.com': contactState('Acme', 1) })),
+  'Globex',
+);
+// "Wrong person" is not "wrong company" — skipping a contact must not burn the
+// employer, only that address.
+check(
+  'skipping a contact does not retire its company',
+  named(loadCompanyPool(poolJobs, { 'a@acme.com': contactState('Acme', 0, true) })),
+  'Acme,Globex',
+);
+
+
+console.log('smtp reply reading');
+// A mail server that hangs up mid-conversation emits 'close' with no 'error'
+// and no final reply line. readReply() used to listen for data and error only,
+// so the promise never settled; with the socket gone nothing held the event
+// loop open and node exited 13 with no stack at all. That took down 5 of 8
+// hourly outreach builds. Rejecting is the honest outcome — verifyEmail()
+// turns a thrown probe into `unknown`.
+{
+  const fake = new EventEmitter() as unknown as Parameters<typeof readReply>[0];
+  const pending = readReply(fake);
+  (fake as unknown as EventEmitter).emit('close');
+  const settled = await pending.then(
+    () => 'resolved',
+    (e: Error) => `rejected: ${e.message}`,
+  );
+  check('a mid-reply hangup rejects instead of hanging forever', settled, 'rejected: connection closed before a complete reply');
+}
+{
+  // The normal path must still work: a complete final line resolves, and a
+  // multi-line 220- continuation must not be read as the answer.
+  const fake = new EventEmitter() as unknown as Parameters<typeof readReply>[0];
+  const pending = readReply(fake);
+  const CRLF = String.fromCharCode(13, 10);
+  (fake as unknown as EventEmitter).emit('data', Buffer.from('250-PIPELINING' + CRLF));
+  (fake as unknown as EventEmitter).emit('data', Buffer.from('250 OK' + CRLF));
+  const reply = await pending;
+  check('a complete reply still resolves', `${reply.code} ${reply.text}`, '250 OK');
+}
+
+console.log('commit-kind openers');
+// A fix, a perf change and a refactor each deserve a different sentence; one
+// generic "saw your recent commit" for all of them is what made the opener
+// read as generated. Conventional prefixes first, keyword shapes after.
+check('conventional fix prefix', commitKind('fix: null check in order parser'), 'fix');
+check('conventional feat prefix', commitKind('feat(rtms): add reconnection sample'), 'feat');
+check('breaking-change marker does not confuse the prefix', commitKind('feat!: overhaul the onboarding flow'), 'feat');
+// Subject matter beats the generic prefix on purpose: a commit touching auth,
+// logging, a schema or an endpoint is a more interesting thing to open a mail
+// with than the bare fact that something was added. fix and perf still win
+// outright, being the strongest hooks available.
+check('an api change outranks its feat prefix', commitKind('feat!: drop v1 api'), 'api');
+check('security outranks everything', commitKind('feat: add oauth token refresh'), 'security');
+check('but a fix stays a fix', commitKind('fix: null check in the request handler'), 'fix');
+// Real commit messages are overwhelmingly past tense. Matching only the
+// imperative forms a style guide asks for missed 24% of the generic bucket
+// across 2,070 real subjects pulled from the orgs this project targets.
+check('past-tense verbs classify', commitKind('added support for multiple currencies'), 'feat');
+check('past-tense logging work classifies', commitKind('added more logging'), 'observability');
+// A ticket id in front defeated every anchored pattern: 13% of the generic
+// bucket was nothing but this.
+check('a leading ticket id is stripped first', commitKind('PO-166 added support for offsite redirect'), 'feat');
+check('and a ticketed version bump is housekeeping', isTrivialCommit('PO-184 : version bump 1.3.0'), true);
+check('perf by keyword, no prefix', commitKind('Speed up cold start by lazily loading the parser'), 'perf');
+check('fix by keyword, no prefix', commitKind('Fixes crash when the socket closes mid-handshake'), 'fix');
+check('ci counts as infra', commitKind('ci: bump runner image'), 'infra');
+check('a ticket prefix is not a conventional type', commitKind('SP-1173: say what to do when CUI marking fails'), 'other');
+// Both spellings of a revert must be caught, including the unprefixed form
+// git itself generates ('Revert "feat: ..."').
+check('git-generated revert', commitKind('Revert "feat: add streaming ingest"'), 'revert');
+check('conventional revert', commitKind('revert: streaming ingest'), 'revert');
+// Opening a cold email by mentioning that somebody had to undo their own work
+// is a bad first impression no phrasing rescues, so it produces no fact at all
+// and buildFirstDraft omits the paragraph.
+check('a revert never becomes an opening line', factLine('Revert "feat: add streaming ingest"', 'Zoom', 'seed'), null);
+// The opener says how the sender found them. Unexplained knowledge of a
+// stranger's work is what makes this kind of mail feel like surveillance.
+{
+  // Both variants of every kind explain the provenance; they differ in whether
+  // they say 'public repos' or just 'repos', so assert the substance not the
+  // exact wording.
+  const opener = factLine('fix: null check', 'Zoom', 'seed')!;
+  check('the opener explains where the fact came from', /Zoom's.*repos|repos.*Zoom's/.test(opener), true);
+}
+// The opener already says what kind of change it was, so quoting the prefix
+// too labels it twice and reads like a pasted field.
+check('a conventional prefix is stripped before quoting', cleanSubject('fix: null check in order parser'), 'null check in order parser');
+check('a scoped prefix is stripped too', cleanSubject('feat(rtms): add reconnection'), 'add reconnection');
+check('a non-conventional subject is left alone', cleanSubject('Fixes crash on reconnect'), 'Fixes crash on reconnect');
+check('stripping never empties the subject', cleanSubject('fix:'), 'fix:');
+
+console.log('registry contacts get a hook too');
+// npm, PyPI and Maven all return the package whose manifest carried the
+// address, and the mapping into Candidate dropped it — so every registry
+// contact shipped with no opening fact at all, a visibly thinner mail than the
+// git path for no reason but a lost field.
+check('an npm package becomes an opener', registryFactLine('@razorpay/blade', 'npm', 'Razorpay', 'seed')?.includes('@razorpay/blade'), true);
+check('the registry is named correctly', registryFactLine('sentry-sdk', 'pypi', 'Sentry', 'seed')?.includes('PyPI'), true);
+check('maven reads as Maven Central', registryFactLine('razorpay-java', 'maven', 'Razorpay', 'seed')?.includes('Maven Central'), true);
+// A contact with no package (website scan, leadership page) still has no hook,
+// and must not get a sentence claiming one.
+check('no package means no registry opener', registryFactLine(undefined, 'npm', 'X', 'seed'), null);
+check('an unknown source means no registry opener', registryFactLine('pkg', 'git', 'X', 'seed'), null);
+
+console.log('the twin guard is structural, not lexical');
+// OUTREACH-DESIGN.md §6 allows two mails to one company on one day provided
+// "hooks must differ per recipient". That is a statement about company, role
+// and hook, which a bag-of-words score cannot express: once the template pools
+// were widened, two colleagues quoting the SAME commit scored 0.559 and two
+// with no hook at all scored 0.619 — both under any threshold that does not
+// also delete unrelated companies, whose varying part reaches 0.833.
+const hk = (company: string, role: string, fact?: string) => hookKey({ company, role, fact });
+check('same company, role and hook collide', hk('Acme', 'SDE II', 'fix: x'), hk('acme', 'sde ii', 'fix: x'));
+check('a different hook does not collide', hk('Acme', 'SDE II', 'fix: x') === hk('Acme', 'SDE II', 'feat: y'), false);
+// Two hookless mails to one company about one role are exactly the blast this
+// rule exists to prevent, so a missing hook deliberately collides with itself.
+check('two missing hooks collide', hk('Acme', 'SDE II'), hk('Acme', 'SDE II'));
+check('a different company never collides', hk('Acme', 'SDE II') === hk('Globex', 'SDE II'), false);
+
+// The signature, identity line, opt-out and link are constant by design
+// (§3), and they are about a third of a seventy-word mail. Counting them
+// measured the design as if it were repetition.
+{
+  const withBlock = renderBody({ greet: 'Hi', first: 'A', roleLine: 'R just opened a T.', ask: 'Q?', passAlong: 'P?' });
+  check('the varying part drops the constant block', variablePart(withBlock).includes('Tell me to stop'), false);
+  check('the varying part keeps the role line', variablePart(withBlock).includes('R just opened a T.'), true);
+}
+
+console.log('follow-ups carry new information');
+// OUTREACH-DESIGN.md section 4 requires new information every touch and forbids
+// "bumping this" — which is exactly what the old single template was. All three
+// facts below are already in the catalogue, free, with no extra fetch.
+const FU = { company: 'Zoom', role: 'Network Engineer', jobUrl: 'https://x/1' };
+const FU_JOB = { id: 'gh:zoom:1', title: 'Network Engineer', company: 'zoom', url: 'https://x/1' };
+check(
+  'a closed req becomes the reason to write',
+  followUpLine(FU, [{ ...FU_JOB, closedAt: '2026-09-01' }], 10).includes('came down'),
+  true,
+);
+check(
+  'a newer opening at the same company outranks repeating the old one',
+  followUpLine(FU, [FU_JOB, { ...FU_JOB, id: 'gh:zoom:2', url: 'https://x/2', title: 'Media Systems Engineer' }], 10).includes('Media Systems Engineer'),
+  true,
+);
+check('a still-open req is itself the signal', followUpLine(FU, [FU_JOB], 10).includes('still up, 10 days on'), true);
+check('a company gone from the catalogue still names the role', followUpLine(FU, [], 10).includes('Network Engineer'), true);
+// The old body was identical for every contact, so the similarity guard then
+// deleted most follow-ups before they were ever seen.
+check(
+  'two follow-ups to different companies do not collide',
+  bodySimilarity(
+    followUpLine(FU, [FU_JOB], 10),
+    followUpLine({ company: 'Meesho', role: 'Data Scientist', jobUrl: 'https://y/1' }, [], 4),
+  ) < 0.8,
+  true,
+);
+
+console.log('weekly linkedin list');
+// Search urls only — this project never fetches LinkedIn (CONTACT-DISCOVERY.md
+// section 9). The human clicks through, already signed in, and sends it.
+check(
+  'a search url is built, not a profile url',
+  linkedinSearchUrl('Max Mansfield', 'Zoom'),
+  'https://www.linkedin.com/search/results/people/?keywords=Max%20Mansfield%20Zoom',
+);
+const CONNECT_NOW = Date.UTC(2026, 8, 10);
+const ago = (days: number) => new Date(CONNECT_NOW - days * 86_400_000).toISOString();
+const connectState = {
+  'a@zoom.us': { company: 'Zoom', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(6)], nextDueAt: '', subject: '', name: 'Max Mansfield' },
+  'b@meesho.com': { company: 'Meesho', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(2)], nextDueAt: '', subject: '', name: 'Priya Nair', replied: true },
+  'c@never.com': { company: 'Never', role: 'r', jobUrl: '', touch: 0, sentAt: [], nextDueAt: '', subject: '', name: 'Never Mailed' },
+  'd@done.com': { company: 'Done', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(9)], nextDueAt: '', subject: '', name: 'Already Connected', connectedAt: ago(1) },
+  'e@bounced.com': { company: 'Bounced', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(8)], nextDueAt: '', subject: '', name: 'Bounced Person', bounced: true },
+};
+const connects = weeklyConnects(connectState as never, CONNECT_NOW);
+// Only people already mailed: a request landing days after a real email is a
+// second touch, the same request to a stranger is a different play entirely.
+check('never-mailed, already-connected and bounced contacts are all excluded', connects.length, 2);
+// A reply is the best possible reason to connect, so it sorts to the top.
+check('a reply outranks age', connects[0]?.name, 'Priya Nair');
+check('then oldest-mailed first', connects[1]?.name, 'Max Mansfield');
+
+// Tiering. The recruiter beats the founder beats the engineer, and a
+// SmartRecruiters contact is a recruiter on its source alone — that rung is
+// the human who created the req, whether or not a title was ever scraped.
+check('a scraped recruiter title tiers as recruiter', connectTier({ title: 'Senior Technical Recruiter' }), 'recruiter');
+check('the req creator tiers as recruiter with no title at all', connectTier({ source: 'smartrecruiters' }), 'recruiter');
+// A CTO matches the exec pattern too; for a hiring conversation the hiring-lead
+// reading is the useful one, so the order of the checks is the behaviour.
+check('a CTO tiers as the hiring lead, not as an exec', connectTier({ title: 'CTO' }), 'hiring-lead');
+check('a founder tiers as exec', connectTier({ title: 'Co-Founder & CEO' }), 'exec');
+check('an unknown title falls through to peer', connectTier({ title: 'Staff Software Engineer' }), 'peer');
+check('a reply outranks every title', connectTier({ replied: true, title: 'Recruiter' }), 'replied');
+
+// Clubbing and the follower-count stand-in. Two companies, both peer-only, so
+// the tiebreak is company size: the one with fewer open roles goes first, and
+// a company the catalogue shows no open role for sorts last rather than first.
+{
+  const st = {
+    'a@big.com': { company: 'Big', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(3)], nextDueAt: '', subject: '', name: 'Big One' },
+    'b@big.com': { company: 'Big', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(4)], nextDueAt: '', subject: '', name: 'Big Two' },
+    'c@small.com': { company: 'Small', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(1)], nextDueAt: '', subject: '', name: 'Small One' },
+    'd@unseen.com': { company: 'Unseen', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(1)], nextDueAt: '', subject: '', name: 'Unseen One' },
+  };
+  const openRoles = new Map([['big', 90], ['small', 3]]);
+  const rows = weeklyConnects(st as never, CONNECT_NOW, { openRoles });
+  check('fewer open roles is a better bet than more', rows[0]?.company, 'Small');
+  check('a company with no visible open role sorts last, not first', rows[rows.length - 1]?.company, 'Unseen');
+  const groups = groupConnects(rows);
+  check('one group per company', groups.map((g) => g.company).join(','), 'Small,Big,Unseen');
+  check('the company cluster stays together', groups[1]?.rows.length, 2);
+
+  // One recruiter drags their whole company up the list: the request to them
+  // and the requests to their colleagues are one sitting.
+  const withRecruiter = weeklyConnects(
+    { ...st, 'e@big.com': { company: 'Big', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(2)], nextDueAt: '', subject: '', name: 'Big Recruiter', source: 'smartrecruiters' } } as never,
+    CONNECT_NOW,
+    { openRoles },
+  );
+  check('a recruiter lifts their whole company above a smaller one', withRecruiter[0]?.company, 'Big');
+
+  // The weekly budget is the real limit on this page, so it must bound the
+  // list itself — offering twenty when four are left is how the LinkedIn cap
+  // gets blown through.
+  check('the offer is capped by what is left this week', weeklyConnects(st as never, CONNECT_NOW, { openRoles, limit: 2 }).length, 2);
+  check('nothing is offered at cap', weeklyConnects(st as never, CONNECT_NOW, { openRoles, limit: 0 }).length, 0);
+}
+
+// The quota counts marked-sent requests on a rolling 7 days, the way LinkedIn
+// counts and the way sentInLast24h() counts mail — not per calendar week.
+{
+  const st = {
+    'a@x.com': { company: 'X', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(20)], nextDueAt: '', subject: '', name: 'A', connectedAt: ago(2) },
+    'b@x.com': { company: 'X', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(20)], nextDueAt: '', subject: '', name: 'B', connectedAt: ago(6) },
+    'c@x.com': { company: 'X', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(20)], nextDueAt: '', subject: '', name: 'C', connectedAt: ago(8) },
+    'd@x.com': { company: 'X', role: 'r', jobUrl: '', touch: 1, sentAt: [ago(20)], nextDueAt: '', subject: '', name: 'D', connectedAt: 'not a date' },
+  };
+  const q = connectQuota(st as never, CONNECT_NOW);
+  check('only requests inside the last 7 days count', q.sent, 2);
+  check('remaining is the cap minus those', q.remaining, q.cap - 2);
+}
+
+console.log('a crashed send never re-sends what it delivered');
+// The only guard used to be "does the .txt still exist", and nothing deletes a
+// file after sending it: re-running an interrupted send re-sent every message
+// it had already delivered, to the same people, byte for byte.
+{
+  const entry = { addr: 'a@x.com', file: 'a@x.com.txt', company: 'X', role: 'r', touch: 0 };
+  check('unsent draft still sends', alreadySent({} as never, entry), false);
+  check('a recorded send of this exact draft blocks the re-send', alreadySent({ 'a@x.com': { touch: 1 } } as never, entry), true);
+  // Touch 1 recorded, and this file is the touch-2 follow-up: a different
+  // message that has not gone out yet.
+  check('the next follow-up in the sequence still sends', alreadySent({ 'a@x.com': { touch: 1 } } as never, { ...entry, touch: 1 }), false);
+  // Manifests written before the field existed carry no touch to compare, so
+  // they keep the old permissive behaviour rather than refusing a whole run.
+  check('a pre-existing manifest is not blocked wholesale', alreadySent({ 'a@x.com': { touch: 3 } } as never, { ...entry, touch: undefined }), false);
+}
+
+console.log('publish merge never forgets a click');
+// The hourly workflow pulls contacted.json, builds for minutes, then pushes.
+// Clicks landing on the live page during those minutes commit to the remote
+// through the hosted API, and push() re-reads the sha right before writing, so
+// GitHub cannot reject the overwrite. Overwriting reverted a reply or a bounce
+// and the next build then mailed that person again.
+{
+  const local = {
+    'a@x.com': { touch: 1, sentAt: ['2026-09-01T00:00:00.000Z'], nextDueAt: '2026-09-05T00:00:00.000Z', verdict: 'valid' },
+    'new@x.com': { touch: 0, sentAt: [], nextDueAt: '2026-09-01T00:00:00.000Z' },
+  };
+  const remote = {
+    'a@x.com': { touch: 2, sentAt: ['2026-09-01T00:00:00.000Z', '2026-09-05T00:00:00.000Z'], nextDueAt: '2026-09-14T00:00:00.000Z', replied: true },
+    'clicked@x.com': { touch: 1, sentAt: ['2026-09-06T00:00:00.000Z'], nextDueAt: '2026-09-10T00:00:00.000Z', bounced: true },
+  };
+  const merged = mergeState(local as never, remote as never);
+  check('a reply recorded mid-build survives the push', merged['a@x.com']?.replied, true);
+  check('a send recorded mid-build survives the push', merged['a@x.com']?.sentAt?.length, 2);
+  check('touch follows the union, not either counter', merged['a@x.com']?.touch, 2);
+  check('the later follow-up date wins', merged['a@x.com']?.nextDueAt, '2026-09-14T00:00:00.000Z');
+  check('locally computed research fields survive too', merged['a@x.com']?.verdict, 'valid');
+  check('a contact only the remote knows about is kept', merged['clicked@x.com']?.bounced, true);
+  check('a contact only the local build knows about is kept', 'new@x.com' in merged, true);
+}
+
+console.log('state reads never fake an empty file');
+// The 2026-09-04 catalogue loss: the hunt restored data/jobs.json with
+// `curl -o` (whose --retry covers connection failures, not a truncated 200
+// body), readJson swallowed the parse error and returned [], updateCatalog
+// concluded there was no catalogue yet, and the publish step force-pushed 144
+// entries over 2,859 on an orphan branch with no history. Three weeks of
+// firstSeen, gone, with the run green and reporting "0 pruned".
+{
+  const dir = 'out/selftest-readjson';
+  await mkdir(dir, { recursive: true });
+  await writeFile(`${dir}/truncated.json`, '[{"id":"a"},{"id":"b","ti', 'utf8');
+  await writeFile(`${dir}/empty.json`, '', 'utf8');
+  await writeFile(`${dir}/good.json`, '[{"id":"a"}]', 'utf8');
+  const outcome = async (path: string): Promise<string> => {
+    try {
+      return `ok:${JSON.stringify(await readJson<unknown[]>(path, []))}`;
+    } catch {
+      return 'threw';
+    }
+  };
+  // A genuinely absent file is an ordinary first run and must stay silent.
+  check('a missing state file still falls back', await outcome(`${dir}/absent.json`), 'ok:[]');
+  // Everything else is corruption wearing an empty file as a disguise.
+  check('a truncated download throws instead of reading as empty', await outcome(`${dir}/truncated.json`), 'threw');
+  check('a zero-byte file throws too', await outcome(`${dir}/empty.json`), 'threw');
+  check('a valid file is unaffected', await outcome(`${dir}/good.json`), 'ok:[{"id":"a"}]');
+  await rm(dir, { recursive: true, force: true });
+}
+
+console.log('the standing draft pool');
+// Drafts used to be regenerated and thrown away every build, so a card seen in
+// the morning was gone by lunchtime. Since the send cap is far below what a
+// build produces, most drafts were being discarded unsent and unseen.
+const poolDraft = (addr: string, over: Record<string, unknown> = {}) => ({
+  id: addr, addr, name: 'N', firstName: 'N', company: 'C', role: 'r', jobUrl: '',
+  lane: 'random' as const, kind: 'first' as const, touch: 0, overdueDays: 0,
+  subject: 's', body: 'b', gmailUrl: '', mailtoUrl: '', ...over,
+});
+const poolContact = (over: Record<string, unknown> = {}) => ({
+  company: 'C', role: 'r', jobUrl: '', touch: 0, sentAt: [], nextDueAt: '', subject: 's', ...over,
+});
+const NOW_ISO = '2026-09-10T00:00:00.000Z';
+const OLD_ISO = '2026-09-01T00:00:00.000Z';
+
+// An option nobody actioned survives the next build — that is the whole point.
+const carried = mergePool([{ ...poolDraft('old@x.com'), firstDraftedAt: OLD_ISO }], [poolDraft('new@x.com')], {}, NOW_ISO);
+check('an un-actioned option survives a rebuild', carried.length, 2);
+
+// A follow-up is derived state, recomputed from contacted.json every build,
+// and its whole identity is a touch count that has already advanced. Pooling
+// one is self-defeating: the eviction rule below retires anything with
+// touch > 0, so a pooled follow-up is thrown straight back out. A live build
+// reported "0 follow-ups" against 207 contacts with two genuinely overdue
+// before this was caught, so buildBatch layers them on after the pool split.
+const withFollowup = mergePool([], [poolDraft('f@x.com', { kind: 'followup', touch: 1 }), poolDraft('n@x.com')], {}, NOW_ISO);
+check('a follow-up is never pooled', withFollowup.map((d) => d.addr).join(','), 'n@x.com');
+check('and keeps the date it first appeared', carried.find((d) => d.addr === 'old@x.com')?.firstDraftedAt, OLD_ISO);
+
+// Resolved contacts leave. Same touch > 0 rule the company dedup uses, for the
+// same reason: rendering a card is not sending one.
+const resolvedOut = mergePool(
+  [{ ...poolDraft('sent@x.com'), firstDraftedAt: OLD_ISO }, { ...poolDraft('skip@x.com'), firstDraftedAt: OLD_ISO }, { ...poolDraft('open@x.com'), firstDraftedAt: OLD_ISO }],
+  [],
+  { 'sent@x.com': poolContact({ touch: 1, sentAt: ['x'] }), 'skip@x.com': poolContact({ skipped: true }) } as never,
+  NOW_ISO,
+);
+check('a mailed or skipped contact leaves the pool', resolvedOut.map((d) => d.addr).join(','), 'open@x.com');
+
+// A week-old option must still name a role that is currently open, so the body
+// refreshes while the age does not.
+const refreshed = mergePool(
+  [{ ...poolDraft('a@x.com', { body: 'stale' }), firstDraftedAt: OLD_ISO }],
+  [poolDraft('a@x.com', { body: 'current' })],
+  {},
+  NOW_ISO,
+);
+check('a re-drafted option takes the fresh body', refreshed[0]?.body, 'current');
+check('but keeps its original age', refreshed[0]?.firstDraftedAt, OLD_ISO);
+
+// Leadership wins over lane: the lane says how fresh the role is, the source
+// says what kind of human is on the other end, and the second decides the mail.
+check('a follow-up sections as a follow-up', section(poolDraft('a@x.com', { kind: 'followup' }) as never), 'followups');
+check('leadership beats a triggered lane', section(poolDraft('a@x.com', { lane: 'triggered', source: 'leadership' }) as never), 'leadership');
+check('a triggered git contact stays triggered', section(poolDraft('a@x.com', { lane: 'triggered', source: 'git' }) as never), 'triggered');
+check('everything else is random', section(poolDraft('a@x.com', { source: 'npm' }) as never), 'random');
+const split = poolToBatch([
+  { ...poolDraft('a@x.com', { lane: 'triggered', source: 'git' }), firstDraftedAt: NOW_ISO },
+  { ...poolDraft('b@x.com', { source: 'leadership' }), firstDraftedAt: NOW_ISO },
+  { ...poolDraft('c@x.com'), firstDraftedAt: NOW_ISO },
+] as never);
+check('the pool splits into the page sections', [split.triggered.length, split.leadership.length, split.random.length].join(','), '1,1,1');
 
 console.log('outreach lane gating');
 // Workday's relative strings must land in the triggered lane, not parse as null.
@@ -901,15 +1370,31 @@ check('missing date is unknown', postedAgeDays(undefined), null);
 check('lowercase catalogue name displays capitalized', displayName('valtech'), 'Valtech');
 check('mixed-case names pass through', displayName('WorldQuant'), 'WorldQuant');
 
-// isTriggered() — fresh by EITHER signal, since firstSeen only became
-// trustworthy once catalog.ts started merging against the live catalogue
-// (hunt.yml fix, 2026-09-02); before that almost every entry's firstSeen
-// read as "now" regardless of how old the posting actually was.
+// isTriggered() — a KNOWN posting age decides on its own; firstSeen is only
+// consulted when the ATS will not say.
+//
+// This used to be "fresh by either signal", which was reasonable when written
+// but did not survive measurement against the live catalogue: 631 of 1,358
+// triggered companies (46%) qualified on firstSeen alone while their own
+// postedAt said the role was older than the window. firstSeen p50 is under
+// five days, so it tracks how long this project has been watching, not how
+// long the role has been open — and the lane exists to find roles the employer
+// still cares about, which our own discovery date says nothing about.
+//
+// The "Posted 30+ Days Ago" case below is the one worth understanding.
+// postedAgeDays() parses that bucket as literally 30, though it really means
+// "at least 30, possibly years". Either reading keeps it out of a 21-day
+// window, which is the right answer: a req the employer itself describes as a
+// month old is not a fresh trigger however recently we noticed it.
 const catalogJob = (postedAt?: string, firstSeen?: string) => ({
   id: 'x', title: 't', company: 'c', url: '', postedAt, firstSeen,
 });
 check('fresh postedAt alone triggers', isTriggered(catalogJob('Posted Today', undefined)), true);
-check('fresh firstSeen alone triggers, even with a stale postedAt', isTriggered(catalogJob('Posted 30+ Days Ago', daysAgo(1))), true);
+check('a known-stale postedAt is not rescued by a fresh firstSeen', isTriggered(catalogJob('Posted 30+ Days Ago', daysAgo(1))), false);
+// The case the either-signal rule was actually written for, and it still works:
+// plenty of ATSes report no date at all, and for those a role this tracker has
+// only just started seeing is exactly what triggered is meant to mean.
+check('firstSeen carries it when the ATS reports no date', isTriggered(catalogJob(undefined, daysAgo(1))), true);
 check('stale on both signals does not trigger', isTriggered(catalogJob('Posted 30+ Days Ago', daysAgo(90))), false);
 check('neither signal present does not trigger', isTriggered(catalogJob(undefined, undefined)), false);
 check('firstSeen just outside the window does not trigger', isTriggered(catalogJob(undefined, daysAgo(TRIGGER_WINDOW_DAYS + 1))), false);
@@ -1149,6 +1634,28 @@ const zohoLike =
   '<p>The Government of India has bestowed the prestigious Padma Shri on our CEO, Sridhar Vembu! It is a moment of great honor.</p>';
 check('a long prose sentence is not read as a title line', extractLeadership(zohoLike).length, 0);
 check('a bare "CEO" with no name-shaped neighbour yields nothing', extractLeadership('<p>Leadership</p><p>CEO</p><p>Reports</p>').length, 0);
+// Three more false positives found live 2026-09-05 running leadership-sweep
+// against real companies, each fixed and pinned here.
+check(
+  'an all-caps section heading is not read as a name (abb.com)',
+  JSON.stringify(extractLeadership('<p>OUR BUSINESS AREAS</p><p>Morten Wierod, ABB CEO</p>')),
+  JSON.stringify([{ name: 'Morten Wierod', title: 'ABB CEO' }]),
+);
+check(
+  'a "Name, Title" one-line pair is read correctly, not the preceding heading (7shifts.com)',
+  JSON.stringify(extractLeadership('<p>Our Mission</p><p>Jordan Boesch, CEO</p>')),
+  JSON.stringify([{ name: 'Jordan Boesch', title: 'CEO' }]),
+);
+check(
+  'a founding-story sentence with parenthetical titles yields nothing (1bios.co)',
+  extractLeadership('<p>Fast Facts</p><p>Founded by Andy Scott (CEO) and David Faber (CTO) in 2014.</p>').length,
+  0,
+);
+check(
+  'a title naming another company via "at X" is rejected as a client testimonial (4flow.com)',
+  extractLeadership('<p>Wayne Winter</p><p>Vice President EMEA SCM &amp; Procurement at Adient</p>').length,
+  0,
+);
 // DMARC rua parsing — vendor-hosted and multi-record shapes both occur.
 check('parseDmarcRua reads plain rua', parseDmarcRua(['v=DMARC1; p=none; rua=mailto:dmarcreports@meesho.com']), 'dmarcreports@meesho.com');
 check('parseDmarcRua handles vendor host + split records', parseDmarcRua(['v=DMARC1;', 'rua=mailto:g72jrssx@ag.ap.dmarcian.com; p=quarantine']), 'g72jrssx@ag.ap.dmarcian.com');
@@ -1159,5 +1666,390 @@ check('packageNameCandidates rejects tiny slugs', JSON.stringify(packageNameCand
 // ApplyBolt response parsing — found:false, junk, and missing-name shapes.
 check('parseApplyBolt reads a hit', JSON.stringify(parseApplyBolt({ found: true, email: 'Bill.Gates@GatesFoundation.org', fullName: 'Bill Gates', jobTitle: 'Co-chair' })), JSON.stringify({ name: 'Bill Gates', email: 'bill.gates@gatesfoundation.org', title: 'Co-chair' }));
 check('parseApplyBolt rejects not-found and malformed', [parseApplyBolt({ found: false }), parseApplyBolt(null), parseApplyBolt({ found: true })].every((r) => r === null), true);
+console.log('teamtailor location (schema.org extension, not the feed item)');
+// JSON Feed carries no location field at all — the city only exists inside
+// Teamtailor's `_jobposting` extension. Reading the item alone silently gives
+// every posting an empty location, which filter.ts then drops as unmatched.
+check(
+  'a single office reads locality, region and country',
+  teamtailorPlace({ jobLocation: { address: { addressLocality: 'Bengaluru', addressRegion: 'Karnataka', addressCountry: 'IN' } } }),
+  'Bengaluru, Karnataka, IN',
+);
+check(
+  'several offices are joined, not silently reduced to the first',
+  teamtailorPlace({ jobLocation: [{ address: { addressLocality: 'Munich' } }, { address: { addressLocality: 'Berlin' } }] }),
+  'Munich / Berlin',
+);
+// "Remote" is appended to the addresses rather than replacing them. Replacing
+// them would make every country-locked hybrid role read as globally remote,
+// because filter.ts only accepts a remote posting when nothing but noise
+// words is left after the addresses are stripped.
+check(
+  'a remote-flagged posting keeps its country so a locked role stays excluded',
+  locationMatches(teamtailorPlace({ jobLocation: [{ address: { addressLocality: 'Stockholm', addressCountry: 'SE' } }], jobLocationType: 'TELECOMMUTE' })),
+  false,
+);
+check(
+  'a remote posting with no address at all reads as genuinely global',
+  locationMatches(teamtailorPlace({ jobLocationType: 'TELECOMMUTE' })),
+  true,
+);
+check('no location block at all yields empty, not a crash', teamtailorPlace(undefined), '');
+
+console.log('breezy location shapes');
+// Breezy sends the single-office form as `location` and the multi-office form
+// as `locations`; reading only one of them loses half the corpus.
+check('the multi-office array wins over the single field', breezyPlace({ locations: [{ name: 'Bengaluru, KA' }, { name: 'Pune, MH' }] }), 'Bengaluru, KA / Pune, MH');
+check('the single-office field is still read', breezyPlace({ location: { name: 'Chaos, FL' } }), 'Chaos, FL');
+check('a place with no `name` falls back to its parts', breezyPlace({ location: { city: 'Hyderabad', country: { name: 'India' } } }), 'Hyderabad, India');
+check('a remote flag is appended, not substituted', breezyPlace({ location: { name: 'Berlin', is_remote: true } }), 'Berlin, Remote');
+
+console.log('personio XML parsing');
+// This shipped broken once, in this adapter's own first draft: the tag regex
+// was built inside a template literal written with single backslashes, where
+// `\s` is not a recognized escape and collapses to a bare `s`. The pattern
+// silently became `([sS]*?)`, every position parsed to nothing, and the board
+// returned zero jobs while looking perfectly healthy.
+const PERSONIO_FEED = `<?xml version="1.0" encoding="UTF-8"?>
+<workzag-jobs>
+<position>
+    <id>1834171</id>
+    <office>Munich</office>
+    <additionalOffices><office>Bengaluru</office></additionalOffices>
+    <name>Staff Software Engineer</name>
+    <jobDescriptions><jobDescription><name>Your tasks</name><value>Build things</value></jobDescription></jobDescriptions>
+    <createdAt>2024-11-13T14:10:41+00:00</createdAt>
+</position>
+</workzag-jobs>`;
+const personioJobs = parsePositions(PERSONIO_FEED, 'acme');
+check('a real feed yields one position, not zero', personioJobs.length, 1);
+check('the title is the position name', personioJobs[0]?.title, 'Staff Software Engineer');
+// A description section carries its own <name>, and additionalOffices its own
+// <office>. Both nested blocks are stripped before the scalar fields are read,
+// so a reordered feed can never report a section heading as the job title.
+check('a description heading is not mistaken for the title', personioJobs[0]?.title !== 'Your tasks', true);
+check('additional offices are included, not dropped', personioJobs[0]?.location, 'Munich / Bengaluru');
+check('the description text is kept for the years gate', personioJobs[0]?.text?.includes('Build things'), true);
+check('an empty feed parses to nothing rather than throwing', parsePositions('<workzag-jobs></workzag-jobs>', 'acme').length, 0);
+// Personio's feed carries no country field on any position, so an office
+// named exactly "Remote" says nothing about where. locationMatches would
+// read that as globally remote and let it through. Measured on the first 60
+// imported boards: 56 matched only on country-less "Remote" against 4 with a
+// real India location, nearly all German listings from German employers.
+check('a country-less remote-only office reports no location', personioPlace(['Remote']), '');
+check('case and spacing do not rescue it', personioPlace(['  remote  ', 'Home Office']), '');
+check(
+  'a remote-only office is therefore excluded, not treated as global',
+  locationMatches(personioPlace(['Remote'])),
+  false,
+);
+check('a real city is kept even alongside Remote', personioPlace(['Remote', 'Hamburg']), 'Remote / Hamburg');
+check('a mixed set with cities stays excluded by the residue check', locationMatches(personioPlace(['Remote', 'Hamburg'])), false);
+// Personio tenants name offices with a country-prefixed code. `_` is a word
+// character, so `bangalore` never matched "IN_Bangalore" and real India
+// boards were being dropped by a word boundary — caught by this check.
+check('a country-prefixed office code still reads as India', personioPlace(['IN_Bangalore', 'IN_Pune']), 'IN Bangalore / IN Pune');
+check('genuine India offices clear the gate', locationMatches(personioPlace(['IN_Bangalore', 'IN_Pune'])), true);
+
+
+console.log('subdomain-captured board URLs reject the vendors own hostnames');
+// Teamtailor, Breezy and Personio are matched on a *subdomain* rather than a
+// path segment, so the vendor's own marketing and app hosts look exactly like
+// a customer board. Without the NOT_A_COMPANY guard, `detect` would happily
+// add a company literally named "Www".
+// Keka spent months listed in the NO_ADAPTER regex after its adapter had
+// already shipped, so every Keka board a scan found was reported as
+// unsupported and dropped. Its token is a plain subdomain, so it belongs here
+// with the other auto-derivable platforms. The check below is the one that
+// can't go stale: a platform named as unsupported while an adapter for it
+// exists is silent loss, and nothing else in the pipeline would ever say so.
+check(
+  'nothing listed as unsupported already has a working adapter',
+  Object.keys(FETCHERS).filter((ats) => NO_ADAPTER.source.includes(ats)).join(','),
+  '',
+);
+check('a real keka board resolves rather than reading as unsupported', parseBoardUrl('https://peoplebox.keka.com/careers')?.ats, 'keka');
+check('a real teamtailor board resolves', parseBoardUrl('https://lifesum.teamtailor.com/jobs')?.token, 'lifesum');
+check('a real breezy board resolves', parseBoardUrl('https://acme.breezy.hr/')?.ats, 'breezy');
+check('a real personio board resolves', parseBoardUrl('https://acme.jobs.personio.de/xml')?.ats, 'personio');
+check('personio .com is the same platform', parseBoardUrl('https://acme.jobs.personio.com/')?.ats, 'personio');
+check('the vendor marketing host is rejected', parseBoardUrl('https://www.teamtailor.com/en/'), null);
+check('the vendor app host is rejected', parseBoardUrl('https://app.breezy.hr/signin'), null);
+
+
+console.log('taleo business edition parsing')
+// TBE lets each tenant choose its result columns, and they genuinely differ:
+// `Title | Department | Work Location | Search Country`, `Title | City |
+// State/Territory | ZIP`, and `Title | Job Category` (no location at all) are
+// all real, from a six-tenant sample. Reading a fixed column as the location
+// would give one board a department, another a ZIP code, and a third nothing.
+// Column 0 is always the title, so a label at column N is the row's Nth-1 div.
+const TALEO_SORT = (labels: string[]) =>
+  labels.map((label, i) => `<option value="https://x/ats/careers/v2/searchResults?org=X&cws=1&act=sort&sortColumn=${i}">${label}</option>`).join('\n');
+
+// The two halves compose, so they are checked together: a column list is only
+// correct if it lands on the right field of a real row.
+const taleoLocation = (labels: string[], row: string) => parseTaleoRows(row, locationColumns(TALEO_SORT(labels)))[0]?.location;
+
+const TALEO_ROWS = `<div class="oracletaleocwsv2-accordion-head-info">
+<h4 class="oracletaleocwsv2-head-title"><a href="https://phg.tbe.taleo.net/phg02/ats/careers/v2/viewRequisition?org=ACME&cws=52&rid=8041" class="viewJobLink">Software Engineer &amp; Analyst</a></h4>
+<div tabindex="0" >Engineering</div>
+<div tabindex="0" >Bengaluru, India</div>
+<div tabindex="0" >India, United States</div>
+</div>`;
+const taleoJobs = parseTaleoRows(TALEO_ROWS, [1]);
+check('a row yields one job', taleoJobs.length, 1);
+check('the requisition id comes from the rid parameter', taleoJobs[0]?.externalId, '8041');
+check('the title is entity-decoded', taleoJobs[0]?.title, 'Software Engineer & Analyst');
+check('the location comes from the chosen column', taleoJobs[0]?.location, 'Bengaluru, India');
+check('an India board clears the gate', locationMatches(taleoJobs[0]?.location ?? ''), true);
+// The same row parsed with the department column selected is what a fixed
+// column index would have produced on a tenant laid out differently.
+check('a wrong column would have read a department as the location', parseTaleoRows(TALEO_ROWS, [0])[0]?.location, 'Engineering');
+check('a row with no location column parses rather than being dropped', parseTaleoRows(TALEO_ROWS, [])[0]?.title, 'Software Engineer & Analyst');
+
+check(
+  'a Work Location column is read as the location',
+  taleoLocation(['Title', 'Department', 'Work Location', 'Search Country'], TALEO_ROWS),
+  'Bengaluru, India',
+);
+// The third column here is a country *list* — every country a role can be
+// applied from, six of them on one CARE USA posting based in Manila. Folding
+// that into the location puts a foreign role into an India-only alert the
+// moment such a list mentions India, so a country column is a fallback only.
+check(
+  'a country list never overrides a real location column',
+  taleoLocation(['Title', 'Work Location', 'Search Country'], TALEO_ROWS.replace('<div tabindex="0" >Engineering</div>\n', '')),
+  'Bengaluru, India',
+);
+// ACME Brick's real layout: no "Location" column at all, the place split
+// across City and State/Territory, and a ZIP column that must stay out of it.
+const TALEO_ADDRESS_ROW = TALEO_ROWS.replace(
+  /<div tabindex="0" >[\s\S]*<\/div>\n/,
+  '<div tabindex="0" >Houston</div>\n<div tabindex="0" >US-TX</div>\n<div tabindex="0" >77095</div>\n',
+);
+check(
+  'city and state are joined when the tenant has no Location column',
+  taleoLocation(['Title', 'City', 'State/Territory', 'ZIP/Postal code'], TALEO_ADDRESS_ROW),
+  'Houston, US-TX',
+);
+check(
+  'a tenant with no location column yields an empty location, not a department',
+  taleoLocation(['Title', 'Job Category', 'Job Type'], TALEO_ROWS),
+  '',
+);
+check(
+  'a country column is used when nothing better exists',
+  taleoLocation(['Title', 'Job Category', 'Job Type', 'Country'], TALEO_ROWS),
+  'India, United States',
+);
+
+// Only Business Edition is covered. The org code is the whole identity: the pod
+// in the path is routing (any pod 302s to the tenant's own) and `cws` comes
+// back from that redirect, so neither is stored.
+check('a TBE board resolves to its org code', parseBoardUrl('https://phg.tbe.taleo.net/phg02/ats/careers/v2/searchResults?org=CAREUSA&cws=52')?.token, 'CAREUSA');
+check('and to the taleo adapter', parseBoardUrl('https://phe.tbe.taleo.net/phe01/ats/careers/v2/searchResults?org=ACTIONLINK&cws=1')?.ats, 'taleo');
+// Enterprise Taleo is a different product that `taleo.ts` cannot read. It must
+// resolve to null rather than be imported as a board that can never be fetched.
+check('enterprise Taleo careersection is not mistaken for TBE', parseBoardUrl('https://acme.taleo.net/careersection/ex/jobsearch.ftl'), null);
+
+
+console.log('YC directory domain cleanup')
+// The directory stores whatever URL the founders typed. This list is now swept
+// weekly by discover.yml, so a domain that `detect` cannot fetch is a company
+// silently skipped every week rather than a one-off annoyance.
+check('a plain https url', bareDomain('https://razorpay.com'), 'razorpay.com');
+check('www is dropped', bareDomain('https://www.zuddl.com/'), 'zuddl.com');
+check('a trailing path is dropped', bareDomain('http://loophealth.com/careers'), 'loophealth.com');
+// 100x's listed website is `https://100x.bot?utm_source=inbound&...` with no
+// path separator at all, so splitting on "/" alone left the whole campaign tail
+// glued to the hostname.
+check('a query string with no path is dropped', bareDomain('https://100x.bot?utm_source=inbound&utm_medium=bookface'), '100x.bot');
+check('a fragment is dropped', bareDomain('https://acme.in#about'), 'acme.in');
+
+
+console.log('rate-limit bucketing')
+// This key function was duplicated in bulk-import.ts, and the copy kept only
+// the Workday case while its comment claimed to be "the same shape as the
+// hourly run's scheduler". It therefore keyed all 1,392 published
+// SuccessFactors tenants — which live on 1,289 *distinct* hostnames — into one
+// bucket capped at 2, turning a sweep that touches each host once into a
+// ~16-hour serial crawl. There is now one exported copy; these checks are what
+// makes a second one show up as a failure rather than as a slow overnight run.
+const sf = (host: string) => rateLimitKey({ ats: 'successfactors' as const, token: 'acme', host });
+check('SuccessFactors is keyed by its own host', sf('career5.successfactors.eu'), 'successfactors:career5.successfactors.eu');
+check('two SF tenants on different hosts do not share a bucket', sf('career5.successfactors.eu') === sf('jobs.sap.com'), false);
+check('an SF tenant with no host falls back to its token', rateLimitKey({ ats: 'successfactors', token: 'careers.acme.com' }), 'successfactors:careers.acme.com');
+check('Workday is keyed by pod, so wd5 boards queue together', rateLimitKey({ ats: 'workday', token: 'acme', host: 'wd5' }), 'workday:wd5');
+check('Greenhouse boards all share one API host', rateLimitKey({ ats: 'greenhouse', token: 'acme' }), 'greenhouse');
+// The cap is looked up by platform even though the key carries the host, which
+// is what makes "2 per host" mean 2 per host rather than 2 in total.
+check('the per-host cap is read from the platform half of the key', limitForHost('successfactors:career5.successfactors.eu'), 2);
+check('an unlisted platform falls back to the default cap', limitForHost('taleo'), 4);
+
+// `maxBuckets` bounds how many host groups run at once. Without it a full
+// SuccessFactors import opens ~1,300 concurrent XML feeds, each with a
+// 180-second timeout and a multi-megabyte body.
+let liveBuckets = 0;
+let peakBuckets = 0;
+await mapLimitByKey(
+  Array.from({ length: 40 }, (_, i) => `host${i}`),
+  (h) => `successfactors:${h}`,
+  () => 2,
+  async () => {
+    peakBuckets = Math.max(peakBuckets, ++liveBuckets);
+    await new Promise((r) => setTimeout(r, 1));
+    liveBuckets--;
+  },
+  4,
+);
+check('maxBuckets bounds how many hosts run at once', peakBuckets <= 4, true);
+
+
+console.log('bulk-import CSV field splitting')
+// The splitter was a bare `line.split(',')` on the assumption that only the
+// trailing url could contain a comma. 896 rows across the six original tenant
+// lists disprove that: a quoted company name with a comma pushes the tail of
+// the name into the slug field, and the row resolves to a nonsense token that
+// dies at validation. 331 of iCIMS's 2,498 rows are this shape.
+check(
+  'a quoted name containing a comma keeps the slug intact',
+  csvFields('"80,000 Hours",80000hours,https://jobs.ashbyhq.com/80000hours')[1],
+  '80000hours',
+);
+check(
+  'the company name is reassembled, not truncated at the comma',
+  csvFields('"Apex Technology, Inc.",apex-technology-inc,https://x')[0],
+  'Apex Technology, Inc.',
+);
+check('an ordinary unquoted row is unchanged', csvFields('Airtel,airtel,https://airtel.darwinbox.in')[1], 'airtel');
+check('a row with a trailing empty column keeps it', csvFields('10x Genomics,10xgenomics,https://x,').length, 4);
+
+console.log('ukg location (address block, not the internal site label)')
+// UKG's `LocalizedName` is the employer's own site code — "NM - KAFB",
+// "AL - USAG Redstone" — with no city or country in it. Reading that as the
+// location would make every posting on the platform invisible to the
+// India/remote gate, since there is nothing in it for the regex to match.
+check(
+  'the address block supplies a real place name',
+  ukgPlace([{ LocalizedName: 'KA - BLR7', Address: { City: 'Bengaluru', State: { Name: 'Karnataka' }, Country: { Name: 'India' } } }]),
+  'Bengaluru, Karnataka, India',
+);
+check(
+  'an India address actually clears the location gate',
+  locationMatches(ukgPlace([{ LocalizedName: 'KA - BLR7', Address: { City: 'Bengaluru', Country: { Name: 'India' } } }])),
+  true,
+);
+check('several sites are joined', ukgPlace([{ Address: { City: 'Pune' } }, { Address: { City: 'Chennai' } }]), 'Pune / Chennai');
+check('a location with no address at all yields empty, not the site code', ukgPlace([{ LocalizedName: 'NM - KAFB' }]), '');
+check('no locations at all yields empty', ukgPlace(undefined), '');
+
+console.log('IMPORTABLE staleness guard')
+// The check that would have caught this file's own worst bug: IMPORTABLE sat
+// at seven platforms while the source published forty-eight, so Keka tracked 7
+// boards against 185 published tenants with a working adapter the whole time.
+// Pure function so this needs no network call.
+check(
+  'a published list for an adapter nobody feeds is reported',
+  unfedPlatforms(['keka.csv', 'greenhouse.csv'], ['greenhouse'], ['keka', 'greenhouse']).join(','),
+  'keka',
+);
+check(
+  'a platform already in IMPORTABLE is not reported',
+  unfedPlatforms(['keka.csv'], ['keka'], ['keka']).length,
+  0,
+);
+check(
+  'a published list with no adapter is not reported — that is a build decision, not staleness',
+  unfedPlatforms(['taleo.csv', 'bamboohr.csv'], [], ['keka']).length,
+  0,
+);
+// A platform can be published, have an adapter, and still be deliberately not
+// imported — without the exemption it would warn on every run and become a
+// line everyone scrolls past. The exemption set is passed in rather than read
+// from the module, because what belongs in it changes: iCIMS sat there for one
+// day until its modern-portal path was built, and the test should outlive that.
+check(
+  'a deliberately-skipped platform stays quiet',
+  unfedPlatforms(['someats.csv'], [], ['someats'], { someats: 'measured dead' }).length,
+  0,
+);
+check(
+  'and is reported again once the exemption is lifted',
+  unfedPlatforms(['someats.csv'], [], ['someats'], {}).join(','),
+  'someats',
+);
+
+console.log('open-jobs slug diffing')
+// These lists are crawled out of URLs, so the same tenant appears with
+// different casing across the two published sources. A case-sensitive compare
+// would hand bulk-import thousands of boards it already polls.
+check('an already-tracked slug is dropped', untrackedSlugs(['acme', 'newco'], ['acme']).join(','), 'newco');
+check('casing does not defeat the dedup', untrackedSlugs(['ACME'], ['acme']).length, 0);
+check('duplicates within the source collapse', untrackedSlugs(['newco', 'NewCo', 'newco'], []).join(','), 'newco');
+check('blank and whitespace-only entries are skipped', untrackedSlugs(['', '   ', 'real'], []).join(','), 'real');
+check('original casing is preserved for the board token', untrackedSlugs(['NewCo'], []).join(','), 'NewCo');
+
+console.log('icims modern portal parsing')
+// iCIMS was written off as unreachable because /api/jobs 404s on modern
+// "Talent Cloud" tenants. It does — but those tenants server-render their
+// search page inside an iframe, and fetching that URL directly returns real
+// rows. Measured on a 40-tenant sample: 38 return rows.
+const ICIMS_ROW = `<ul class="iCIMS_JobsTable"><li class="iCIMS_JobCardItem">
+  <div class="col-xs-6 header left"><span class="sr-only field-label">Job Locations</span><span > IN-KA-Bengaluru</span></div>
+  <div class="col-xs-12 title"><a href="https://x-acme.icims.com/jobs/4021/staff-engineer/job?in_iframe=1" class="iCIMS_Anchor"><span class="sr-only field-label">Title</span><h3 > Staff Engineer</h3></a></div>
+  <div class="col-xs-12 description">Five years of experience required.</div>
+</li></ul>`;
+const icimsJobs = parsePortal(ICIMS_ROW, 'x-acme.icims.com');
+check('a card yields one job', icimsJobs.length, 1);
+check('the requisition id comes from the job path', icimsJobs[0]?.externalId, '4021');
+check('the title comes from the card heading', icimsJobs[0]?.title, 'Staff Engineer');
+check('the url drops the iframe parameter', icimsJobs[0]?.url, 'https://x-acme.icims.com/jobs/4021/staff-engineer/job');
+check('an inline description is kept, so no enrich round trip is needed', icimsJobs[0]?.text, 'Five years of experience required.');
+// The location label is tenant-configured: "Location" and "Job Locations" both
+// occur, so the pattern matches any label containing "Location".
+check(
+  'the other label spelling parses too',
+  parsePortal(ICIMS_ROW.replace('Job Locations', 'Location'), 'x-acme.icims.com')[0]?.location,
+  'IN-KA-Bengaluru, India',
+);
+// Some tenants localize the label — one Italian board calls it "Sedi di
+// lavoro" — and some put the location only in additionalFields. Neither is
+// reachable by an English pattern, but iCIMS tags exactly the location fields
+// with a map-marker glyphicon, so the icon identifies them where text cannot.
+// Position would be the wrong fallback: other tenants lead with "Client Team".
+const ICIMS_LOCALIZED = `<li class="iCIMS_JobCardItem">
+  <div class="col-xs-12 title"><a href="https://it-acme.icims.com/jobs/3904/process-engineer/job"><h3 > Process Engineer</h3></a></div>
+  <div class="iCIMS_JobHeaderTag"><dt class="iCIMS_JobHeaderField"><span class="glyphicons glyphicons-map-marker"></span><span class="sr-only field-label">Sedi di lavoro</span></dt><dd class="iCIMS_JobHeaderData"><span > IT-Rho</span></dd></div>
+</li>`;
+check(
+  'a localized label is recovered from the map-marker icon',
+  parsePortal(ICIMS_LOCALIZED, 'it-acme.icims.com')[0]?.location,
+  'IT-Rho',
+);
+const ICIMS_NON_LOCATION = `<li class="iCIMS_JobCardItem">
+  <div class="col-xs-12 title"><a href="https://x.icims.com/jobs/7/driver/job"><h3 > Driver</h3></a></div>
+  <div class="iCIMS_JobHeaderTag"><dt class="iCIMS_JobHeaderField">Vehicle Information</dt><dd class="iCIMS_JobHeaderData"><span > Van</span></dd></div>
+</li>`;
+check(
+  'an unmarked header field is not mistaken for a location',
+  parsePortal(ICIMS_NON_LOCATION, 'x.icims.com')[0]?.location,
+  '',
+);
+// iCIMS writes locations as COUNTRY-STATE-CITY. A bare country code is not
+// something the INDIA regex can match, so a leading IN- gets the country name
+// appended. Only leading: "US-IN-Indianapolis" is Indiana, and expanding that
+// would put US roles into an India-only alert.
+check('a leading IN- is expanded so the India gate can see it', normalizeLocation('IN-KA-Bengaluru'), 'IN-KA-Bengaluru, India');
+check('an India location clears the gate', locationMatches(normalizeLocation('IN-Remote')), true);
+check('Indiana in the state slot is left alone', normalizeLocation('US-IN-Indianapolis'), 'US-IN-Indianapolis');
+check('and Indiana still does not read as India', locationMatches(normalizeLocation('US-IN-Indianapolis')), false);
+check('an empty location stays empty rather than becoming ", India"', normalizeLocation('  '), '');
+// Page size is tenant-configured (20 and 50 both observed), so the walk is
+// bounded by the portal's own count rather than by rows returned.
+check('the page count is read from the portal', pageCount('<div>Search Results Page 1 of 7</div>'), 7);
+check('a single-page board reports one', pageCount('<div>Page 1 of 1</div>'), 1);
+check('a portal with no paging text still reports one', pageCount('<div>nothing here</div>'), 1);
+
 console.log(failures === 0 ? '\nall checks pass' : `\n${failures} failing check(s)`);
 process.exit(failures === 0 ? 0 : 1);
