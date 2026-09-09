@@ -20,6 +20,28 @@ const BRANCH = process.env.OUTREACH_DATA_BRANCH ?? 'main';
 const KEY = process.env.OUTREACH_KEY ?? '';
 /** Same cadence as TOUCH_GAPS in src/outreach.ts — keep in sync. */
 const GAPS = [0, 4, 9, 16];
+/**
+ * Same rolling-24h ceiling as SEND_CAP in src/outreach.ts, and it must be read
+ * from the same env var so raising one raises both.
+ *
+ * This is the *primary* send path — a human clicking cards on the deployed
+ * page — and it had no cap at all while the localhost server it mirrors did.
+ * A published batch of 80 cards could be clicked end to end in one sitting,
+ * which is exactly the volume that gets a young mailbox flagged
+ * (OUTREACH-DESIGN.md §1: 20/day while ramping).
+ */
+const SEND_CAP = Number(process.env.OUTREACH_AUTO_CAP ?? 12);
+
+/** Counted across state's own timestamps on a rolling window, the way
+ *  providers count — not per local midnight. Mirrors sentInLast24h(). */
+function sentInLast24h(state: OutreachState): number {
+  const cutoff = Date.now() - 24 * 60 * 60_000;
+  let count = 0;
+  for (const entry of Object.values(state)) {
+    for (const iso of entry.sentAt ?? []) if (new Date(iso).getTime() >= cutoff) count++;
+  }
+  return count;
+}
 
 /**
  * Indexed by the touch just sent, matching `touchGap()` in src/outreach.ts.
@@ -116,8 +138,11 @@ export async function GET(
 
   const { action, id: idParts } = await params;
 
-  if (action === 'page') {
-    const { text } = await getFile('today.html');
+  // Both rendered pages are published as plain HTML by src/publish-outreach.ts
+  // and served straight back: the mail batch, and the weekly LinkedIn list.
+  if (action === 'page' || action === 'connects') {
+    const file = action === 'page' ? 'today.html' : 'connects.html';
+    const { text } = await getFile(file);
     if (text === null) return new Response('no batch published yet — run the outreach workflow', { status: 404 });
     return new Response(text, {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
@@ -136,6 +161,28 @@ export async function GET(
     const draft = (JSON.parse(draftsText || '{}') as Record<string, DraftRef>)[id];
     if (!draft) return new Response('draft not in current batch', { status: 404 });
 
+    // Both gates read the state as it is right now, not as the page was
+    // rendered. A published page is static and a browser tab can sit open for
+    // days, so "the batch builder would never have drawn this card" is not a
+    // guarantee at click time — only a fresh read is.
+    const { text: currentText } = await getFile('contacted.json');
+    if (currentText === null) return new Response('state unavailable — try again', { status: 409 });
+    const current = JSON.parse(currentText || '{}') as OutreachState;
+    const cur = current[id];
+    if (cur?.replied || cur?.bounced || cur?.skipped) {
+      return new Response(
+        `${id} is already marked ${cur.bounced ? 'bounced' : cur.replied ? 'replied' : 'skipped'} — not opening the draft. Rebuild to clear this card.`,
+        { status: 409 },
+      );
+    }
+    const already = sentInLast24h(current);
+    if (already >= SEND_CAP) {
+      return new Response(
+        `${already}/${SEND_CAP} already sent in the last 24h. Wait for the window to roll, or raise OUTREACH_AUTO_CAP deliberately.`,
+        { status: 429 },
+      );
+    }
+
     const { ok } = await commitState((state) => {
       const prev = state[id];
       const touch = (prev?.touch ?? 0) + 1;
@@ -150,6 +197,40 @@ export async function GET(
     // follow-up goes out as if it were a first touch.
     if (!ok) return new Response('could not record the send — not opening the draft, try again', { status: 409 });
     return NextResponse.redirect(action === 'open' ? draft.gmailUrl : draft.mailtoUrl, 302);
+  }
+
+  // Mirrors the 'sent' action on the localhost server in src/outreach.ts:
+  // record a mail sent by hand, without opening a compose window. The two
+  // implementations have drifted apart before (the GAPS[touch - 1] off-by-one),
+  // so they must gain routes together.
+  // Mirrors the connected action on the localhost server. Records that the
+  // LinkedIn request was sent so the weekly list stops offering that person;
+  // nothing here contacts LinkedIn.
+  if (action === 'connected') {
+    let known = true;
+    const { ok } = await commitState((state) => {
+      const cur = state[id];
+      if (!cur) { known = false; return; }
+      (cur as ContactState & { connectedAt?: string }).connectedAt = now;
+    });
+    if (!known) return new Response('unknown contact', { status: 404 });
+    if (!ok) return new Response('could not record - try again', { status: 409 });
+    return NextResponse.redirect(backToPage, 302);
+  }
+
+  if (action === 'sent') {
+    const { ok } = await commitState((state) => {
+      const prev = state[id];
+      const touch = (prev?.touch ?? 0) + 1;
+      state[id] = {
+        ...prev,
+        touch,
+        sentAt: [...(prev?.sentAt ?? []), now],
+        nextDueAt: new Date(Date.now() + gapAfter(touch) * 86_400_000).toISOString(),
+      };
+    });
+    if (!ok) return new Response('could not record the send — try again', { status: 409 });
+    return NextResponse.redirect(backToPage, 302);
   }
 
   if (action === 'replied' || action === 'skip' || action === 'bounce') {
