@@ -1,3 +1,5 @@
+import type { Company } from './types.js';
+
 /**
  * Every tunable lives here. Start wide, tighten after a week of real output —
  * it is much easier to notice noise than to notice a job you never saw.
@@ -136,6 +138,35 @@ export const HOST_CONCURRENCY: Record<string, number> = {
   successfactors: 2, // its XML feeds take 30-170s each; parallelism here buys nothing
   default: 4,
 };
+
+/**
+ * The host that actually enforces the rate limit, which is not the same as the
+ * ATS. Every Greenhouse board shares one API host, but Workday tenants are
+ * spread across pods (wd1, wd3, wd5, ...) that throttle independently — so the
+ * pod has to be part of the key, or 93 wd5 boards queue as if they were 93
+ * unrelated hosts. Phenom and Eightfold run on the customer's own domain, so
+ * each tenant is genuinely its own host and can go at full speed.
+ *
+ * This lives here, next to the caps it looks up, because it was duplicated in
+ * `bulk-import.ts` and the copy silently lost three of the four special cases.
+ * Its comment claimed it was "the same shape as the hourly run's scheduler";
+ * it keyed every SuccessFactors tenant as one bucket instead. SuccessFactors
+ * publishes 1,392 tenants across 1,289 distinct hostnames, so that copy
+ * serialized a sweep that touches each host exactly once down to two requests
+ * at a time — the ~16-hour full-import estimate in HANDOFF.md was measuring
+ * this bug, not the platform.
+ */
+export function rateLimitKey(company: Pick<Company, 'ats' | 'token' | 'host'>): string {
+  if (company.ats === 'workday') return `workday:${company.host ?? 'wd'}`;
+  if (company.ats === 'phenom' || company.ats === 'eightfold') {
+    return `${company.ats}:${company.token}`;
+  }
+  if (company.ats === 'successfactors') return `successfactors:${company.host ?? company.token}`;
+  return company.ats;
+}
+
+export const limitForHost = (key: string): number =>
+  HOST_CONCURRENCY[key.split(':')[0]!] ?? HOST_CONCURRENCY.default!;
 
 /**
  * Word-bounded, and that matters more than it looks: without `\b`, "india"
