@@ -26,6 +26,11 @@ import * as pyjamahr from './pyjamahr.js';
 import * as zappyhire from './zappyhire.js';
 import * as zimyo from './zimyo.js';
 import * as recruitee from './recruitee.js';
+import * as teamtailor from './teamtailor.js';
+import * as breezy from './breezy.js';
+import * as personio from './personio.js';
+import * as ukg from './ukg.js';
+import * as taleo from './taleo.js';
 
 export interface Fetcher {
   list(company: Company): Promise<RawJob[]>;
@@ -61,4 +66,9 @@ export const FETCHERS: Record<Ats, Fetcher> = {
   zappyhire,
   zimyo,
   recruitee,
+  teamtailor,
+  breezy,
+  personio,
+  ukg,
+  taleo,
 };
