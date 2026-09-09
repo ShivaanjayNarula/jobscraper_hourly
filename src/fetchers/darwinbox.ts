@@ -1,5 +1,5 @@
 import type { Company, RawJob } from '../types.js';
-import { curlJson, toPlainText } from './util.js';
+import { curlJson, safeIso, toPlainText } from './util.js';
 
 interface DarwinboxJob {
   id: string;
@@ -26,18 +26,11 @@ const MAX_PAGES = 12;
 
 /**
  * `created_on` is typed `string | number` because the API sends both across
- * tenants, and either shape can fail to parse — a garbled string or an
- * out-of-range epoch number both make `new Date(...).toISOString()` throw
- * `RangeError: Invalid time value` instead of returning something falsy.
- * Same failure class as Eightfold/Zappyhire's epoch sentinels: a single bad
- * value would otherwise make this one company look permanently dead instead
- * of just missing a posted date.
+ * tenants, and either shape can fail to parse. The guard itself now lives in
+ * `util.ts` — every adapter needs the same rule — and is re-exported here so
+ * the call sites and the regression suite that named this bug keep working.
  */
-export function safeIso(value: string | number | undefined): string | undefined {
-  if (value === undefined) return undefined;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-}
+export { safeIso } from './util.js';
 
 /**
  * Darwinbox — the HR suite behind a lot of large Indian employers.
