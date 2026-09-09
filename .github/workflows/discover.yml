@@ -86,3 +86,54 @@ jobs:
         with:
           commit_message: 'bulk-import: new boards from ats-scrapers tenant lists [skip ci]'
           file_pattern: companies.json
+
+  # Re-resolves YC's India directory against every company's own careers page.
+  #
+  # Cron-shaped rather than one-off for the reason the first manual pass
+  # measured: of 158 active YC India companies, 132 had no detectable ATS on
+  # any CAREER_PATHS route and 19 were client-rendered SPAs. That is not a
+  # failed sweep, it is the finding — YC-stage startups adopt an ATS *after*
+  # they start hiring in volume, so the same list re-run later resolves
+  # companies that resolved to nothing before. The first pass added bolna.ai;
+  # a second pass the same day (after a stale NO_ADAPTER regex was fixed) added
+  # Peoplebox, Zuddl, Loop Health and Inito — 49 live India roles the pipeline
+  # could already fetch and simply was not pointed at.
+  #
+  # Cheap by construction: ~158 careers-page fetches, and `detect` only adds a
+  # board after fetching it through the real adapter and finding jobs on it.
+  yc-directory:
+    # Third in the same chain as `discover` and `bulk-import`, for the same
+    # reason they are chained to each other: all three commit companies.json,
+    # and running them concurrently means whichever pushes last gets a
+    # non-fast-forward rejection.
+    needs: bulk-import
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Closes the same replication window documented on bulk-import above:
+      # `needs:` orders job start, not checkout's view of the ref.
+      - run: git pull origin main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install --no-audit --no-fund
+
+      # India only. The full directory is thousands of companies, overwhelmingly
+      # US startups whose boards would add corpus size and no India roles —
+      # `detect` has no india bar of its own, unlike bulk-import's `--bar`, so
+      # widening this widens what gets committed. Drop the argument to sweep
+      # everything if that trade ever changes.
+      - run: npm run yc-domains -- India > state/yc-india.txt
+
+      - run: npm run detect -- state/yc-india.txt
+
+      - name: Commit resolved boards
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'yc: boards resolved from the YC India directory [skip ci]'
+          file_pattern: companies.json
