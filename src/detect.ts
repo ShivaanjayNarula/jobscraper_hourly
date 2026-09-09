@@ -4,7 +4,7 @@ import { FETCHERS } from './fetchers/index.js';
 import { mapLimit } from './fetchers/util.js';
 import { locationMatches } from './filter.js';
 import { loadCompanies, saveCompanies } from './state.js';
-import { HOSTED as SUPPORTED, WORKDAY } from './board-url.js';
+import { boardKey, HOSTED as SUPPORTED, NEEDS_MANUAL_EXTRACTION, NO_ADAPTER, WORKDAY } from './board-url.js';
 
 /**
  * Resolves a company's careers page to its actual ATS board.
@@ -19,15 +19,6 @@ import { HOSTED as SUPPORTED, WORKDAY } from './board-url.js';
  */
 const CAREER_PATHS = ['/careers', '/careers/', '/jobs', '/jobs/', '/company/careers', '/about/careers'];
 
-/**
- * Platforms this file can't resolve to a ready-to-add `Company` automatically
- * — either because there's genuinely no adapter yet, or because the adapter
- * exists but needs fields (tenant + companyId hash, org GUID, host pod, ...)
- * that aren't recoverable from a single regex group on the careers-page HTML.
- * Reported either way so a real board doesn't silently vanish from the scan.
- */
-const NO_ADAPTER = /keka\.com|icims\.com/i;
-const NEEDS_MANUAL_EXTRACTION = /darwinbox\.[a-z]+|turbohire\.co|successfactors\.[a-z]+|phenompeople\.com/i;
 
 async function fetchText(url: string): Promise<string> {
   try {
@@ -128,7 +119,7 @@ async function main(): Promise<void> {
   const found = await mapLimit(targets, 8, (t) => detect(t.domain, t.industry));
 
   const existing = await loadCompanies();
-  const known = new Set(existing.map((c) => `${c.ats}:${c.token.toLowerCase()}`));
+  const known = new Set(existing.map(boardKey));
   const additions: Company[] = [];
 
   for (const result of found) {
@@ -141,7 +132,7 @@ async function main(): Promise<void> {
       continue;
     }
     const { company } = result;
-    const key = `${company.ats}:${company.token.toLowerCase()}`;
+    const key = boardKey(company);
     if (known.has(key)) {
       console.log(`  = ${result.domain.padEnd(24)} ${company.ats}:${company.token} (already have it)`);
       continue;
