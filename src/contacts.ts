@@ -200,8 +200,15 @@ export const isCorporateAddress = (email: string): boolean =>
  * merges, dependency bumps, release tags — reads worse than no fact at all.
  */
 export function isTrivialCommit(message: string): boolean {
-  return /^(merge\b|bump |v?\d+\.\d+|release |revert |chore\b|update\s+(?:readme|security|[\w-]+\.(?:md|json|ya?ml)))/i.test(
-    message.trim(),
+  // A leading ticket id hid housekeeping from every anchored pattern below:
+  // "PO-184 : version bump 1.3.0" is exactly the noise this filter exists to
+  // drop, and it was surviving into the pool of candidate opening facts.
+  const m = message
+    .trim()
+    .replace(/^\[[^\]]{1,30}\]\s*/, '')
+    .replace(/^[A-Z][A-Z0-9]{1,9}-\d+\s*[:\-]?\s*/, '');
+  return /^(merge\b|bump |v?\d+\.\d+|release |revert |chore\b|version bump|package (&|and) package|update\s+(?:readme|security|[\w-]+\.(?:md|json|ya?ml)))/i.test(
+    m,
   );
 }
 
