@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DATA_URL, REPO_URL, type Job } from '@/lib/types';
 import { AddCompany } from './add-company';
+import { YCPanel } from './yc';
 
 const INDUSTRIES = ['tech', 'fintech', 'quant', 'banking', 'consulting'] as const;
 
@@ -38,6 +39,46 @@ function isBacklog(job: Job): boolean {
   const posted = new Date(job.postedAt).getTime();
   if (Number.isNaN(posted)) return false;
   return (Date.now() - posted) / 86_400_000 > BACKLOG_DAYS;
+}
+
+const ms = (iso: string | undefined): number => new Date(iso ?? '').getTime();
+
+/**
+ * How old a posting really is: the OLDER of what the board claims and when we
+ * first saw it, never the newer. Each date alone is defeatable — the board's
+ * can be re-stamped, and ours only goes back as far as the catalogue does — but
+ * a posting is at least as old as whichever says it is older.
+ */
+function effectiveAgeDays(job: Job): number | null {
+  const ages = [ms(job.postedAt), ms(job.firstSeen)]
+    .filter((t) => !Number.isNaN(t))
+    .map((t) => (Date.now() - t) / 86_400_000);
+  return ages.length ? Math.max(...ages) : null;
+}
+
+// A role still open a year on is very likely not a real vacancy: an evergreen
+// "talent pool" post, a requisition nobody closed, or a listing kept up to
+// collect applications. Fires on ~15% of open postings today.
+const GHOST_DAYS = 365;
+
+function isGhost(job: Job): boolean {
+  if (job.closedAt) return false;
+  const age = effectiveAgeDays(job);
+  return age !== null && age > GHOST_DAYS;
+}
+
+// The posting claims to have been published well after the day we first saw it
+// on the board, which is only possible if the date was re-stamped to look
+// fresh. Our firstSeen cannot be forged by the employer, which is the whole
+// reason this is detectable. The gap absorbs ordinary skew — timezones, or a
+// board indexing a requisition a day or two after it was published.
+const BUMP_DAYS = 7;
+
+function isBumped(job: Job): boolean {
+  const posted = ms(job.postedAt);
+  const seen = ms(job.firstSeen);
+  if (Number.isNaN(posted) || Number.isNaN(seen)) return false;
+  return (posted - seen) / 86_400_000 > BUMP_DAYS;
 }
 
 // 2-hour bins for the first day. The first six are labeled "Last N hours"
@@ -155,6 +196,22 @@ function JobRow({
         {job.workMode === 'remote' && <span className="tag">remote</span>}
         {job.workMode === 'hybrid' && <span className="tag">hybrid</span>}
         {job.visa && <span className="tag">visa sponsorship</span>}
+        {isBumped(job) && (
+          <span
+            className="tag stale"
+            title={`Posting claims ${job.postedAt?.slice(0, 10)}, but we first saw it on ${job.firstSeen.slice(0, 10)} — the date was re-stamped to look new.`}
+          >
+            date bumped
+          </span>
+        )}
+        {isGhost(job) && (
+          <span
+            className="tag stale"
+            title={`Open for about ${Math.round((effectiveAgeDays(job) ?? 0) / 30)} months. A role listed this long is often never filled.`}
+          >
+            ghost risk
+          </span>
+        )}
         {job.closedAt && <span className="tag closed">closed</span>}
       </div>
     </li>
@@ -162,24 +219,25 @@ function JobRow({
 }
 
 /**
- * Open the outreach batch page.
- *
- * The key is asked for once and kept in localStorage rather than compiled into
- * this page: the site is public, so anything in the bundle is public too, and
- * the outreach batch is keyed by real people's addresses. Prompting keeps the
- * secret on the one device that needs it.
+ * Ask for the outreach key once and remember it in localStorage rather than
+ * compiling it into the page: the site is public, so anything in the bundle
+ * is public too, and the outreach batch is keyed by real people's addresses.
+ * Returns the key on success, null if the prompt was cancelled.
  */
-function openOutreach() {
-  const stored = window.localStorage.getItem('outreachKey');
-  const key = stored ?? window.prompt('Outreach key (asked once, then remembered on this device)');
-  if (!key) return;
-  if (!stored) window.localStorage.setItem('outreachKey', key);
-  window.open(`/api/outreach/page?k=${encodeURIComponent(key)}`, '_blank', 'noopener');
+function requestOutreachKey(): string | null {
+  const key = window.prompt('Outreach key (asked once, then remembered on this device)');
+  if (!key) return null;
+  window.localStorage.setItem('outreachKey', key);
+  return key;
 }
 
 export default function Page() {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Top-level Jobs/Outreach switch — not to be confused with the per-day
+  // browsing tabs below, which live entirely inside the Jobs view.
+  const [view, setView] = useState<'jobs' | 'outreach' | 'connect' | 'yc'>('jobs');
+  const [outreachKey, setOutreachKey] = useState<string | null>(null);
 
   const [query, setQuery] = useState('');
   const [maxYears, setMaxYears] = useState(3);
@@ -257,6 +315,7 @@ export default function Page() {
     setSavedIds(loadIdSet(SAVED_KEY));
     setAppliedIds(loadIdSet(APPLIED_KEY));
     setExclude(localStorage.getItem(EXCLUDE_KEY) ?? '');
+    setOutreachKey(localStorage.getItem('outreachKey'));
   }, []);
 
   const markOpened = (id: string) =>
@@ -366,9 +425,49 @@ export default function Page() {
       <header>
         <div className="header-row">
           <h1>Job Radar</h1>
-          <button className="chip outreach-link" onClick={openOutreach} title="Today's cold-email batch">
-            Outreach batch
-          </button>
+          <nav className="tabs">
+            <button className="chip" data-on={view === 'jobs'} onClick={() => setView('jobs')}>
+              Jobs
+            </button>
+            <button
+              className="chip"
+              data-on={view === 'outreach'}
+              title="Today's cold-email batch"
+              onClick={() => {
+                if (!outreachKey) {
+                  const key = requestOutreachKey();
+                  if (!key) return;
+                  setOutreachKey(key);
+                }
+                setView('outreach');
+              }}
+            >
+              Outreach
+            </button>
+            <button
+              className="chip"
+              data-on={view === 'connect'}
+              title="This week's LinkedIn connection requests, clubbed by company"
+              onClick={() => {
+                if (!outreachKey) {
+                  const key = requestOutreachKey();
+                  if (!key) return;
+                  setOutreachKey(key);
+                }
+                setView('connect');
+              }}
+            >
+              LinkedIn
+            </button>
+            <button
+              className="chip"
+              data-on={view === 'yc'}
+              title="YC India companies, and which of them we can see hiring"
+              onClick={() => setView('yc')}
+            >
+              YC India
+            </button>
+          </nav>
         </div>
         <p>
           Fresher and entry-level roles in India and remote, read straight from company ATS
@@ -376,6 +475,8 @@ export default function Page() {
         </p>
       </header>
 
+      {view === 'jobs' && (
+      <>
       <section className="controls panel">
         <div className="row">
           <input
@@ -572,6 +673,62 @@ export default function Page() {
       )}
 
       <AddCompany />
+      </>
+      )}
+
+      {view === 'outreach' && (
+        <section className="panel outreach-panel">
+          {outreachKey ? (
+            <iframe
+              key={outreachKey}
+              src={`/api/outreach/page?k=${encodeURIComponent(outreachKey)}`}
+              title="Outreach batch"
+              className="outreach-frame"
+            />
+          ) : (
+            <div className="outreach-locked">
+              <p>Outreach key needed to load today&rsquo;s batch.</p>
+              <button
+                className="chip"
+                onClick={() => {
+                  const key = requestOutreachKey();
+                  if (key) setOutreachKey(key);
+                }}
+              >
+                Enter key
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {view === 'connect' && (
+        <section className="panel outreach-panel">
+          {outreachKey ? (
+            <iframe
+              key={outreachKey}
+              src={`/api/outreach/connects?k=${encodeURIComponent(outreachKey)}`}
+              title="Weekly LinkedIn connections"
+              className="outreach-frame"
+            />
+          ) : (
+            <div className="outreach-locked">
+              <p>Outreach key needed to load this week&rsquo;s list.</p>
+              <button
+                className="chip"
+                onClick={() => {
+                  const key = requestOutreachKey();
+                  if (key) setOutreachKey(key);
+                }}
+              >
+                Enter key
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {view === 'yc' && <YCPanel jobs={jobs ?? []} />}
 
       <footer>
         Data and source on <a href={REPO_URL}>GitHub</a>. Apply on the company link — direct
