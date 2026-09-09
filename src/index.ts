@@ -7,7 +7,7 @@ import { isFreshEnough, locationMatches, normalizeForDedup, preScreen, shouldAle
 import { renderEmail, subject } from './email.js';
 import { rampingCompanies } from './trends.js';
 import { updateCatalog, type CatalogEntry } from './catalog.js';
-import { CONCURRENCY, BLOCK_HOLD_DAYS, DROP_AFTER_FAILING_DAYS, HOST_CONCURRENCY, MULTILOC_MAX_PER_BOARD } from './config.js';
+import { CONCURRENCY, BLOCK_HOLD_DAYS, DROP_AFTER_FAILING_DAYS, limitForHost, MULTILOC_MAX_PER_BOARD, rateLimitKey } from './config.js';
 import { BlockError, type BlockKind } from './fetchers/block.js';
 import { boardKey } from './board-url.js';
 import { resolvePlaceholderLocations } from './fetchers/workday.js';
@@ -66,26 +66,6 @@ interface BoardResult {
   blockKind?: BlockKind;
   durationMs: number;
 }
-
-/**
- * The host that actually enforces the rate limit, which is not the same as the
- * ATS. Every Greenhouse board shares one API host, but Workday tenants are
- * spread across pods (wd1, wd3, wd5, ...) that throttle independently — so the
- * pod has to be part of the key, or 93 wd5 boards queue as if they were 93
- * unrelated hosts. Phenom and Eightfold run on the customer's own domain, so
- * each tenant is genuinely its own host and can go at full speed.
- */
-function rateLimitKey(company: Company): string {
-  if (company.ats === 'workday') return `workday:${company.host ?? 'wd'}`;
-  if (company.ats === 'phenom' || company.ats === 'eightfold') {
-    return `${company.ats}:${company.token}`;
-  }
-  if (company.ats === 'successfactors') return `successfactors:${company.host ?? company.token}`;
-  return company.ats;
-}
-
-const limitForHost = (key: string): number =>
-  HOST_CONCURRENCY[key.split(':')[0]!] ?? HOST_CONCURRENCY.default!;
 
 async function pollBoard(company: Company, multiLocations: Record<string, string>): Promise<BoardResult> {
   const started = Date.now();
