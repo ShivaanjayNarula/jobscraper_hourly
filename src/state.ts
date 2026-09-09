@@ -13,11 +13,50 @@ const COMPANIES_PATH = 'companies.json';
 const OUTAGE_PATH = 'state/outage.json';
 const HOST_STATS_PATH = 'state/host-stats.json';
 
+/**
+ * Read a JSON state file, falling back only when it genuinely does not exist.
+ *
+ * This used to be a bare `catch` returning the fallback, which conflated two
+ * situations that could not be more different: "no file yet, this is a first
+ * run" and "the file is there but unreadable". The second silently became an
+ * empty catalogue, an empty seen-set, an empty contact list.
+ *
+ * That is not hypothetical. On 2026-09-04 at 14:00 UTC the hunt restored
+ * data/jobs.json from the data branch with `curl -o` — whose --retry covers
+ * connection failures, not a truncated 200 body — and wrote a file that would
+ * not parse. readJson returned [], updateCatalog concluded there was no
+ * catalogue yet, built 144 entries out of that run’s 100 matches, and the
+ * publish step force-pushed them over the 2,859 that were there. The data
+ * branch is an orphan branch with a single commit, so roughly three weeks of
+ * accumulated firstSeen went with it, unrecoverably. The run reported
+ * "0 newly closed, 0 pruned" and exited green.
+ *
+ * The same swallow had already caused the outreach incident recorded in
+ * HANDOFF.md, where a state restore wrote the base64 envelope instead of the
+ * file: valid JSON of the wrong shape there, invalid JSON here, identical
+ * consequence. Anything that reads state through this function - seen.json,
+ * board-state.json, contacted.json, drafts.json, companies.json - had the same
+ * exposure, and a corrupt seen.json would re-alert the entire corpus while a
+ * corrupt contacted.json would re-mail every person already contacted.
+ *
+ * So: a missing file is still an ordinary fallback, and anything else throws.
+ * A caller that genuinely tolerates corruption can catch; none currently should.
+ */
 export async function readJson<T>(path: string, fallback: T): Promise<T> {
+  let text: string;
   try {
-    return JSON.parse(await readFile(path, 'utf8')) as T;
-  } catch {
-    return fallback;
+    text = await readFile(path, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return fallback;
+    throw error;
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    // Includes the zero-byte case, which is what a truncated download leaves.
+    throw new Error(
+      `${path} exists but is not valid JSON (${text.length} bytes) — refusing to treat it as empty: ${(error as Error).message}`,
+    );
   }
 }
 
