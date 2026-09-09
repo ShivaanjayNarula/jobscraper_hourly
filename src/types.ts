@@ -25,7 +25,12 @@ export type Ats =
   | 'pyjamahr'
   | 'zappyhire'
   | 'zimyo'
-  | 'recruitee';
+  | 'recruitee'
+  | 'teamtailor'
+  | 'breezy'
+  | 'personio'
+  | 'ukg'
+  | 'taleo';
 
 /**
  * Industry drives which seniority vocabulary applies. This is not cosmetic:
