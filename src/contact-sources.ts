@@ -171,14 +171,73 @@ const LEADERSHIP_PATHS = ['/about', '/about-us', '/company', '/company/about', '
  * scrape covers both; only the ranking at the end decides which one ships.
  */
 const ENGINEERING_TITLE =
-  /\b(CTO|Chief Technology Officer|VP\s*,?\s*Engineering|Vice President\s*,?\s*Engineering|Head of Engineering|Engineering Manager|Director of Engineering)\b/i;
+  /\b(CTO|Chief Technology Officer|VP\s*,?\s*Engineering|Vice President\s*,?\s*Engineering|Head of Engineering|Engineering Manager|Director of Engineering|Engineering Lead|Tech(?:nical)? Lead)\b/i;
 const EXEC_TITLE = /\b(CEO|Chief Executive Officer|Co-?Founder|Founder|President)\b/i;
-const TITLE_RE = new RegExp(`(?:${ENGINEERING_TITLE.source})|(?:${EXEC_TITLE.source})`, 'i');
+/**
+ * Broader management tier, added for outreach beyond just CTO/CEO: VP/Director
+ * across any function plus the people-ops titles (Head of Talent/People,
+ * Hiring Manager) most likely to actually own a hiring decision. Deliberately
+ * excludes bare "Manager" — Zoho's about page and others taught us that a
+ * generic word invites exactly the flowing-prose false positives the 60-char
+ * title cap and block-aware line splitting were built to reject.
+ */
+const MANAGEMENT_TITLE =
+  /\b(VP|Vice President)\s*,?\s*\w+|Director(?:\s+of\s+\w+)?|Head of (?:Talent|People|Recruiting|HR|Human Resources|Product)|Hiring Manager|General Manager\b/i;
+const TITLE_RE = new RegExp(
+  `(?:${ENGINEERING_TITLE.source})|(?:${EXEC_TITLE.source})|(?:${MANAGEMENT_TITLE.source})`,
+  'i',
+);
+
+/** Engineering first, then CEO/founder, then the broader management tier — see
+ *  the comments on each regex above for why. */
+function tierRank(title: string): number {
+  if (ENGINEERING_TITLE.test(title)) return 0;
+  if (EXEC_TITLE.test(title)) return 1;
+  return 2;
+}
 
 // 2-3 capitalized words, nothing longer — long enough for "Sridhar Vembu" or
 // "Mary Jo Watson", short enough to reject a sentence that happens to start
 // with a capital ("The Government of India has bestowed...").
 const NAME_RE = /^[A-Z][a-zA-Z.'-]{1,20}(?:\s+[A-Z][a-zA-Z.'-]{1,20}){1,2}$/;
+
+/**
+ * A section heading ("OUR BUSINESS AREAS", "OUR MISSION") is 2-3 capitalized
+ * words too, so NAME_RE alone waves it through. A real name is never fully
+ * upper-case letter by letter beyond the initial cap — measured live against
+ * abb.com and 4flow.com, both of which produced a heading-as-name hit before
+ * this guard.
+ */
+function looksLikeName(s: string): boolean {
+  if (!NAME_RE.test(s)) return false;
+  return s.split(/\s+/).every((word) => word.length === 1 || /[a-z]/.test(word));
+}
+
+/**
+ * Same length cap as before, plus two prose tells a real title line never
+ * carries: a digit (a founding year, "...in 2014") or a parenthesis (a
+ * parenthetical aside naming someone's role mid-sentence, "Andy Scott
+ * (CEO)"). Measured live against 1bios.co: without this, "Founded by Andy
+ * Scott (CEO) and David Faber (CTO) in 2014." matched TITLE_RE and grabbed
+ * an unrelated "Fast Facts" heading as the "name".
+ */
+function looksLikeTitleLine(s: string): boolean {
+  // "...at Adient" / "...at HelloFresh" is a client-testimonial call-out
+  // ("VP X at OtherCompany"), not the page owner's own leadership — measured
+  // live on 4flow.com's about page, which quotes a HelloFresh VP and an
+  // Adient VP by name. A title on someone's own company page never phrases
+  // itself as being "at" another company.
+  return s.length <= 60 && !/[()0-9]/.test(s) && !/\bat\s+[A-Z]/.test(s) && TITLE_RE.test(s);
+}
+
+/**
+ * Some layouts put name and title on one line ("Jordan Boesch, CEO") instead
+ * of separate elements. Tried before the neighbour-line search below —
+ * without it, that line's title half still matched TITLE_RE, and the
+ * *previous* heading line ("Our Mission") got misread as the name instead of
+ * the real one sitting right there after the comma.
+ */
+const NAME_TITLE_LINE_RE = /^([A-Z][a-zA-Z.'-]{1,20}(?:\s+[A-Z][a-zA-Z.'-]{1,20}){1,2}),\s*(.+)$/;
 
 /**
  * HTML to text that keeps block-element boundaries as line breaks, unlike
@@ -195,8 +254,8 @@ function blockAwareLines(html: string): string[] {
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
     .replace(/<(br|\/p|\/div|\/h[1-6]|\/li|\/tr|\/td)\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCharCode(Number(code)))
     .replace(/&amp;/g, '&')
-    .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
     .split('\n')
     .map((l) => l.trim())
@@ -212,18 +271,28 @@ export function extractLeadership(html: string): LeadershipContact[] {
   const lines = blockAwareLines(html);
   const found = new Map<string, LeadershipContact>();
   for (let i = 0; i < lines.length; i++) {
-    const title = lines[i]!;
-    if (title.length > 60 || !TITLE_RE.test(title)) continue;
+    const line = lines[i]!;
+
+    const sameLine = NAME_TITLE_LINE_RE.exec(line);
+    if (sameLine) {
+      const [, name, title] = sameLine as unknown as [string, string, string];
+      if (looksLikeName(name) && looksLikeTitleLine(title) && !found.has(name)) {
+        found.set(name, { name, title });
+      }
+      continue; // Either consumed above, or not name+title at all — not a bare title line either way.
+    }
+
+    if (!looksLikeTitleLine(line)) continue;
     for (const cand of [lines[i - 1], lines[i + 1]]) {
-      if (cand && NAME_RE.test(cand) && !TITLE_RE.test(cand) && !found.has(cand)) {
-        found.set(cand, { name: cand, title });
+      if (cand && looksLikeName(cand) && !TITLE_RE.test(cand) && !found.has(cand)) {
+        found.set(cand, { name: cand, title: line });
         break;
       }
     }
   }
   // Engineering-tier titles first — see the comment on ENGINEERING_TITLE above.
   return [...found.values()].sort(
-    (a, b) => Number(!ENGINEERING_TITLE.test(a.title)) - Number(!ENGINEERING_TITLE.test(b.title)),
+    (a, b) => tierRank(a.title) - tierRank(b.title),
   );
 }
 
@@ -257,7 +326,7 @@ export async function leadershipContacts(siteUrl: string): Promise<LeadershipCon
     }
   }
   return [...found.values()].sort(
-    (a, b) => Number(!ENGINEERING_TITLE.test(a.title)) - Number(!ENGINEERING_TITLE.test(b.title)),
+    (a, b) => tierRank(a.title) - tierRank(b.title),
   );
 }
 
