@@ -112,7 +112,12 @@ async function lookupMx(domain: string): Promise<MxRecord[]> {
   }
 }
 
-function readReply(socket: Socket): Promise<{ code: number; text: string }> {
+/**
+ * Exported only so the selftest can drive it with a fake socket — the
+ * close-without-reply path below is unreachable from a unit test otherwise,
+ * and it is the one that took the hourly outreach build down.
+ */
+export function readReply(socket: Socket): Promise<{ code: number; text: string }> {
   return new Promise((resolve, reject) => {
     let buffer = '';
     const onData = (chunk: Buffer) => {
@@ -129,12 +134,32 @@ function readReply(socket: Socket): Promise<{ code: number; text: string }> {
       cleanup();
       reject(error);
     };
+    /**
+     * A server that hangs up mid-conversation emits 'close' with no 'error' and
+     * no final reply line: a tarpit dropping the session, a gateway refusing to
+     * continue, or our own post-connect idle timeout calling destroy(). Without
+     * this listener the promise simply never settles — and because the socket is
+     * gone there is nothing left holding the event loop open, so node exits with
+     * code 13 ("unsettled top-level await") printing no error and no stack at
+     * all. That is what killed 5 of 8 hourly outreach builds before this fix;
+     * the log just stopped mid-company and the step reported exit 13.
+     *
+     * Rejecting is right rather than resolving to some placeholder code: the
+     * caller in verifyEmail() already treats a thrown probe as `unknown`, which
+     * is the honest verdict for a conversation that never finished.
+     */
+    const onClose = () => {
+      cleanup();
+      reject(new Error('connection closed before a complete reply'));
+    };
     const cleanup = () => {
       socket.off('data', onData);
       socket.off('error', onError);
+      socket.off('close', onClose);
     };
     socket.on('data', onData);
     socket.on('error', onError);
+    socket.on('close', onClose);
   });
 }
 
@@ -231,4 +256,4 @@ if (process.argv[1]?.endsWith('verify-email.ts')) {
   }
   const result = await verifyEmail(address);
   console.log(`${address}  ${result.verdict}  (${result.reason})`);
-}
+}s
