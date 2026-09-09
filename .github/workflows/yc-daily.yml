@@ -1,0 +1,42 @@
+name: yc-daily
+
+on:
+  schedule:
+    # Daily at 05:10 UTC. Runs independently of the weekly discover/bulk-import
+    # chain so the common-crawl step does not block YC coverage. YC-stage
+    # startups adopt an ATS after they start hiring, so the same list re-run
+    # daily catches boards that resolved to nothing yesterday.
+    - cron: '10 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  yc-directory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pull latest companies.json before detect runs so the commit at the end
+      # is a fast-forward — the weekly discover/bulk-import run, bot commits,
+      # and yesterday's yc-daily all move the ref.
+      - run: git pull origin main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm install --no-audit --no-fund
+
+      # India only — same reasoning as the yc-directory job in discover.yml.
+      - run: npm run yc-domains -- India > state/yc-india.txt
+
+      - run: npm run detect -- state/yc-india.txt
+
+      - name: Commit resolved boards
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'yc: boards resolved from the YC India directory [skip ci]'
+          file_pattern: companies.json
