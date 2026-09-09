@@ -23,8 +23,16 @@ const REPO = process.env.OUTREACH_DATA_REPO ?? '';
 const TOKEN = process.env.OUTREACH_GH_TOKEN ?? '';
 const BRANCH = process.env.OUTREACH_DATA_BRANCH ?? 'main';
 const STATE_PATH = process.env.OUTREACH_STATE_PATH ?? 'state/contacted.json';
+const DRAFTS_PATH = process.env.OUTREACH_DRAFTS_PATH ?? 'state/drafts.json';
 
-if (!REPO || !TOKEN) {
+/**
+ * Guarded exactly like outreach.ts's own CLI block: selftest imports
+ * mergeState() from here, and an import must never exit the process for a
+ * missing token or print the usage banner.
+ */
+const RUNNING = process.argv[1]?.endsWith('publish-outreach.ts') ?? false;
+
+if (RUNNING && (!REPO || !TOKEN)) {
   console.error('OUTREACH_DATA_REPO and OUTREACH_GH_TOKEN must both be set');
   process.exit(1);
 }
@@ -74,9 +82,70 @@ async function push(remote: string, contents: string): Promise<void> {
   console.log(`pushed ${remote} (${contents.length} bytes)`);
 }
 
-const args = process.argv.slice(2);
+/** Only the fields this merge has to reason about; everything else rides
+ *  along on whichever record wins. */
+interface ContactRecord {
+  touch?: number;
+  sentAt?: string[];
+  nextDueAt?: string;
+  replied?: boolean;
+  skipped?: boolean;
+  bounced?: boolean;
+  bouncedAt?: string;
+  connectedAt?: string;
+}
+type OutreachState = Record<string, ContactRecord & Record<string, unknown>>;
+
+/**
+ * Union the two copies so nothing that actually happened is forgotten.
+ *
+ * The rule is monotone in both directions, because both sides hold real
+ * events: the local build owns the research fields it just computed (SMTP
+ * verdicts, names, facts), and the remote owns whatever a human clicked while
+ * that build was running. So sends are unioned by timestamp, a flag set on
+ * either side stays set, and `touch` follows the send list rather than either
+ * side's counter. A flag is never cleared here — un-replying or un-bouncing
+ * somebody is precisely the mistake that would put another mail in their
+ * inbox.
+ */
+export function mergeState(local: OutreachState, remote: OutreachState): OutreachState {
+  const merged: OutreachState = { ...remote };
+  for (const [addr, l] of Object.entries(local)) {
+    const r = remote[addr];
+    if (!r) {
+      merged[addr] = l;
+      continue;
+    }
+    const sentAt = [...new Set([...(l.sentAt ?? []), ...(r.sentAt ?? [])])].sort();
+    const out: OutreachState[string] = { ...r, ...l, sentAt };
+    // touch counts sends, so it follows the union — taking either side's own
+    // number would undercount a send the other side recorded.
+    out.touch = Math.max(l.touch ?? 0, r.touch ?? 0, sentAt.length);
+    // The later due date belongs to the later send.
+    out.nextDueAt = [l.nextDueAt, r.nextDueAt].filter(Boolean).sort().pop() ?? l.nextDueAt;
+    for (const flag of ['replied', 'skipped', 'bounced'] as const) {
+      if (l[flag] || r[flag]) out[flag] = true;
+    }
+    for (const stamp of ['bouncedAt', 'connectedAt'] as const) {
+      const seen = [l[stamp], r[stamp]].filter(Boolean).sort();
+      if (seen.length) out[stamp] = seen[0];
+    }
+    merged[addr] = out;
+  }
+  return merged;
+}
+
+const args = RUNNING ? process.argv.slice(2) : [];
 
 if (args.includes('--pull')) {
+  // The standing pool of options travels with the state. Without it every
+  // hosted build starts from an empty pool and the whole point of keeping
+  // yesterday's un-sent drafts is lost on the very next run.
+  const pooled = await pull('drafts.json');
+  await mkdir('state', { recursive: true });
+  await writeFile(DRAFTS_PATH, pooled.text ?? '[]', 'utf8');
+  console.log(`pulled drafts.json -> ${DRAFTS_PATH} (${JSON.parse(pooled.text || '[]').length} options)`);
+
   const { text } = await pull('contacted.json');
   await mkdir('state', { recursive: true });
   await writeFile(STATE_PATH, text ?? '{}\n', 'utf8');
@@ -87,12 +156,38 @@ if (args.includes('--pull')) {
 if (args.includes('--push')) {
   // State first: if a later upload fails, the bookkeeping that prevents
   // double-mailing is still the thing that survived.
-  await push('contacted.json', await readFile(STATE_PATH, 'utf8'));
+  //
+  // Merged rather than overwritten. `push()` deliberately re-reads the sha
+  // right before writing so GitHub cannot reject the write — which also means
+  // GitHub cannot protect this file. The local copy was pulled at the START of
+  // a build that takes minutes, and every click on the live page during those
+  // minutes commits to the remote through the hosted API. Pushing the local
+  // snapshot straight over the top silently reverted them: a "replied" or
+  // "bounced" flag set mid-build would disappear, and the next build would
+  // then draft a follow-up to somebody who had already answered or whose
+  // address had already bounced.
+  const localState = JSON.parse(await readFile(STATE_PATH, 'utf8')) as OutreachState;
+  const remoteState = JSON.parse((await pull('contacted.json')).text || '{}') as OutreachState;
+  await push('contacted.json', `${JSON.stringify(mergeState(localState, remoteState), null, 2)}\n`);
+  // A halted build (bounce gate) returns before it writes the pool, so the
+  // file can legitimately be absent. Pushing an empty array in that case would
+  // wipe the standing options in the data repo, which is the opposite of what
+  // persistence is for — so skip the push entirely and leave the stored pool
+  // alone rather than overwrite it with nothing.
+  const pool = await readFile(DRAFTS_PATH, "utf8").catch(() => null);
+  if (pool === null) console.log(`no ${DRAFTS_PATH} this run — leaving the stored pool untouched`);
+  else await push('drafts.json', pool);
   await push('batch.json', await readFile('out/outbox/batch.json', 'utf8'));
   await push('today.html', await readFile('out/outbox/today.html', 'utf8'));
+  // The weekly LinkedIn list, served as its own tab on the site. Absent on a
+  // --mbox or --print build, and leaving last week's copy in place beats
+  // failing the whole push over it.
+  const connects = await readFile('out/outbox/connects.html', 'utf8').catch(() => null);
+  if (connects === null) console.log('no out/outbox/connects.html this run — leaving the published one alone');
+  else await push('connects.html', connects);
 }
 
-if (!args.includes('--pull') && !args.includes('--push')) {
+if (RUNNING && !args.includes('--pull') && !args.includes('--push')) {
   console.log('usage: npm run publish-outreach -- --pull | --push');
   process.exit(1);
 }
