@@ -8,6 +8,8 @@
   --accent-soft: #eef2fe;
   --intern: #0a7c53;
   --closed: #b4232b;
+  /* Staleness warnings: not an error like --closed, but not neutral either. */
+  --stale: #9a6206;
   --radius: 10px;
 }
 
@@ -22,6 +24,7 @@
     --accent-soft: #1c2340;
     --intern: #4fd39c;
     --closed: #ff8087;
+    --stale: #e0a53f;
   }
 }
 
@@ -131,6 +134,7 @@ li.job[data-opened='true'] a.title { font-size: 13px; font-weight: 400; color: v
 .tag { border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; }
 .tag.intern { color: var(--intern); border-color: currentColor; }
 .tag.closed { color: var(--closed); border-color: currentColor; }
+.tag.stale { color: var(--stale); border-color: currentColor; }
 
 .empty { text-align: center; color: var(--muted); padding: 48px 20px; }
 
@@ -179,4 +183,27 @@ footer { margin-top: 40px; font-size: 12px; color: var(--muted); text-align: cen
 
 /* Header now carries the outreach-batch link beside the title. */
 .header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.outreach-link { flex: none; }
+.tabs { display: flex; gap: 8px; flex: none; }
+
+.outreach-panel { margin-top: 22px; padding: 0; overflow: hidden; }
+.outreach-frame { display: block; width: 100%; height: 80vh; border: 0; }
+.outreach-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--muted);
+}
+
+/* YC India tab. Rows reuse `.job`'s card styling; the only additions are the
+   two-column split (company on the left, its open roles on the right) and the
+   collapsed role list, which is a <details> so a company with 30 open roles
+   doesn't push the rest of the directory off the screen. */
+.yc-list { margin-top: 18px; display: grid; gap: 8px; }
+.yc-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.yc-jobs { font-size: 13px; flex: 1 1 340px; }
+.yc-jobs summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.yc-jobs ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.yc-jobs a { color: var(--fg); text-decoration: none; }
+.yc-jobs a:hover { text-decoration: underline; }
