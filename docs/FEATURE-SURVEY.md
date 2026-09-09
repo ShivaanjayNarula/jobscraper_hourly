@@ -9,7 +9,7 @@ status: **HAVE**, **MISS** (worth considering), or **PARKED**
 
 ## A. Source coverage & ingestion
 
-1. Multi-ATS JSON API polling (Greenhouse/Lever/Ashby/Workday/SmartRecruiters) — kalil0321/ats-scrapers, adgramigna/job-board-scraper, Feashliaa/job-board-aggregator, MabudAlam/JobsScraper. **HAVE** (20+ platforms).
+1. Multi-ATS JSON API polling (Greenhouse/Lever/Ashby/Workday/SmartRecruiters) — kalil0321/ats-scrapers, adgramigna/job-board-scraper, Feashliaa/job-board-aggregator, MabudAlam/JobsScraper. **HAVE** (30 platforms).
 2. India-only ATS adapters (Darwinbox, TurboHire, Keka, Zoho Recruit, Freshteam, Recruiterflow, iCIMS-legacy, Trakstar, Zwayam…) — nobody else has these. **HAVE** (unique).
 3. First-party career APIs (Amazon, Apple, Google, TikTok, Uber, Meta GraphQL) — kalil0321/ats-scrapers, Flare. **PARTIAL** (rendered-board entries for Google/Meta/Uber; no Meta GraphQL).
 4. Aggregator boards beyond per-company ATS (RemoteOK, Remotive, WeWorkRemotely, WorkingNomads as sources) — Fighter90/career-ops-ui, Hiring-Radar. **MISS** (rejected class per identity? These are public JSON feeds, actually compatible — reconsider).
