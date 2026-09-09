@@ -4,6 +4,22 @@ import { BlockError, classifyFailure, classifyOkBody, headOf } from './block.js'
 
 const run = promisify(execFile);
 
+/**
+ * Guarded date conversion, shared by every adapter that reads a date field an
+ * ATS controls. Both shapes the APIs actually send can fail: a garbled string
+ * and an out-of-range epoch number each make `new Date(...).toISOString()`
+ * throw `RangeError: Invalid time value` rather than return something falsy,
+ * and one bad value in one posting would make that whole board look dead for
+ * the rest of the eviction clock. This lives here rather than in one adapter
+ * because it is the single most-repeated correctness rule in the fetchers —
+ * see the "recurring bug class" section of HANDOFF.md.
+ */
+export function safeIso(value: string | number | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
 /** Identify the bot honestly. Boards are far more tolerant of a named client. */
 export const UA =
   'jobscraper-next/1.0 (personal job alert bot; +https://github.com/topics/job-scraper)';
@@ -143,12 +159,20 @@ export function toPlainText(html: string): string {
  * and get every one of them 429'd, which is exactly what happened. Capping
  * per-host instead lets total throughput go *up* (many hosts at once) while
  * each individual host sees less pressure than before.
+ *
+ * `maxBuckets` bounds how many host groups run at once, and exists for one
+ * caller: a full SuccessFactors import spans 1,289 distinct hostnames, so
+ * without a ceiling the per-host cap alone would open ~1,300 concurrent XML
+ * feeds, each with a 180-second timeout and a multi-megabyte body. The hourly
+ * run passes nothing and keeps its old behaviour, where the board budget
+ * already bounds the bucket count.
  */
 export async function mapLimitByKey<T, R>(
   items: readonly T[],
   keyOf: (item: T) => string,
   limitFor: (key: string) => number,
   fn: (item: T) => Promise<R>,
+  maxBuckets?: number,
 ): Promise<R[]> {
   const buckets = new Map<string, { item: T; index: number }[]>();
   items.forEach((item, index) => {
@@ -159,12 +183,11 @@ export async function mapLimitByKey<T, R>(
   });
 
   const results: R[] = new Array(items.length);
-  await Promise.all(
-    [...buckets.entries()].map(([key, entries]) =>
-      mapLimit(entries, limitFor(key), async ({ item, index }) => {
-        results[index] = await fn(item);
-      }),
-    ),
+  const groups = [...buckets.entries()];
+  await mapLimit(groups, maxBuckets ?? groups.length, ([key, entries]) =>
+    mapLimit(entries, limitFor(key), async ({ item, index }) => {
+      results[index] = await fn(item);
+    }),
   );
   return results;
 }
