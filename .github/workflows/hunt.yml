@@ -121,7 +121,14 @@ jobs:
       # depend on this file being current, only the bookkeeping does.
       - name: Restore live catalogue from the data branch
         run: |
-          curl -fsSL --retry 2 -o data/jobs.json "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/data/jobs.json" || true
+          if curl -fsSL --retry 2 -o data/jobs.json "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/data/jobs.json"; then
+            node -e "console.log('restored live catalogue: ' + JSON.parse(require('fs').readFileSync('data/jobs.json','utf8')).length + ' entries')"
+          else
+            # Still must not fail the hunt — but it must not be invisible either.
+            # A silent failure here means merging against a stale committed
+            # snapshot, which resets firstSeen for almost every entry.
+            echo "::warning::could not restore the live catalogue; merging against the committed snapshot and firstSeen will be wrong this run"
+          fi
 
       # Only Google and Meta need a real browser; everything else is a JSON call.
       # The download is ~115 MB, so it's cached — otherwise it would dominate the
@@ -314,6 +321,16 @@ jobs:
           commit_message: 'companies: board list update [skip ci]'
           file_pattern: companies.json
 
+      # The commit message carries [skip ci] for the same reason every commit
+      # to main does, and it matters more here: Vercel deploys every branch by
+      # default and honours [skip ci], and this branch is force-pushed 72 times
+      # a day. That was 72 preview deployments a day of an app that does not
+      # live on this branch at all — enough on its own to exhaust the Hobby
+      # plan's 100-deployments-per-day limit, which is how real deploys of the
+      # web app started getting rate limited. The site reads jobs.json from
+      # raw.githubusercontent at runtime (see web/next.config.mjs), so new data
+      # has never needed a deploy to go live.
+      #
       # The catalogue is DERIVED data — regenerable from the boards at any time,
       # so its history has no value. Keeping it on main would add a fresh copy to
       # git 24 times a day, forever. Instead it lives on an orphan `data` branch
@@ -328,10 +345,44 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           publish=$(mktemp -d)
+
+          # The push below is a FORCE push onto an orphan branch with a single
+          # commit: whatever is there is gone, with no history to recover from.
+          # That is normally what we want (24 commits a day of a 3 MB file is
+          # not worth keeping), but it also means one bad run destroys the
+          # catalogue permanently — which already happened once, on 2026-09-04,
+          # costing about three weeks of accumulated firstSeen across every
+          # platform uniformly. firstSeen cannot be reconstructed after the fact;
+          # coverage re-accumulates on its own, history does not.
+          #
+          # So: refuse to replace a healthy published catalogue with a
+          # drastically smaller one. Skipping the publish is always safe (the
+          # next run republishes) whereas publishing a collapse is not, so this
+          # exits 0 rather than failing the job.
+          if curl -fsSL --retry 2 -o "$publish/prev.json" "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/data/jobs.json"; then
+            verdict=$(node -e "
+              const fs = require('fs');
+              const prev = JSON.parse(fs.readFileSync(process.argv[1], 'utf8')).length;
+              const next = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')).length;
+              // Below 200 the published catalogue is itself mid-rebuild, so there
+              // is nothing worth protecting and a small new one is not evidence
+              // of anything going wrong.
+              const ok = prev < 200 || next >= prev * 0.5;
+              console.log((ok ? 'publish ' : 'skip ') + next + ' vs ' + prev);
+            " "$publish/prev.json" data/jobs.json)
+            echo "catalogue guard: $verdict"
+            case "$verdict" in
+              skip*)
+                echo "::warning::catalogue collapsed ($verdict) — not publishing. The live catalogue is left alone; investigate before the next run."
+                exit 0
+                ;;
+            esac
+          fi
+
           cp data/jobs.json "$publish/jobs.json"
           cd "$publish"
           git init -q
           git checkout -qb data
           git add jobs.json
-          git -c user.name='github-actions[bot]'               -c user.email='github-actions[bot]@users.noreply.github.com'               commit -qm "catalog: ${{ steps.hunt.outputs.new_count }} new"
+          git -c user.name='github-actions[bot]'               -c user.email='github-actions[bot]@users.noreply.github.com'               commit -qm "catalog: ${{ steps.hunt.outputs.new_count }} new [skip ci]"
           git push -qf "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git" data
