@@ -100139,5 +100139,142 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-09-13T08:01:34.140Z"
+  },
+  {
+    "name": "healthverity",
+    "ats": "greenhouse",
+    "token": "healthverity",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "highmetric",
+    "ats": "greenhouse",
+    "token": "highmetric",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "lafayettesquare",
+    "ats": "greenhouse",
+    "token": "lafayettesquare",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "atariinc",
+    "ats": "greenhouse",
+    "token": "atariinc",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "atomicindustriesinc",
+    "ats": "greenhouse",
+    "token": "atomicindustriesinc",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "atwellgroup",
+    "ats": "greenhouse",
+    "token": "atwellgroup",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "autointegrate",
+    "ats": "greenhouse",
+    "token": "autointegrate",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "belonghealth",
+    "ats": "greenhouse",
+    "token": "belonghealth",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "hen-technologies",
+    "ats": "ashby",
+    "token": "hen-technologies",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "imagineart",
+    "ats": "ashby",
+    "token": "imagineart",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "integral-de",
+    "ats": "ashby",
+    "token": "integral-de",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "jobs-page-4dc2685b-eb82-46d1-a3f9-1f0764dba814",
+    "ats": "ashby",
+    "token": "jobs-page-4dc2685b-eb82-46d1-a3f9-1f0764dba814",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "ispeedtolead",
+    "ats": "ashby",
+    "token": "ispeedtolead",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "kantiv",
+    "ats": "ashby",
+    "token": "kantiv",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "irissoftwaregroup",
+    "ats": "ashby",
+    "token": "irissoftwaregroup",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Local%20Infusion",
+    "ats": "ashby",
+    "token": "Local%20Infusion",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Mastra",
+    "ats": "ashby",
+    "token": "Mastra",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "ffd",
+    "ats": "workday",
+    "token": "ffd",
+    "host": "wd1",
+    "site": "EmploymentOpportunities",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "genmills",
+    "ats": "workday",
+    "token": "genmills",
+    "host": "wd1",
+    "site": "GMI_External_Careers",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
