@@ -107516,5 +107516,61 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-09-20T09:01:38.163Z"
+  },
+  {
+    "name": "84674th44metrea9999",
+    "ats": "greenhouse",
+    "token": "84674th44metrea9999",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "adapty-io",
+    "ats": "ashby",
+    "token": "adapty-io",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "aidigest",
+    "ats": "ashby",
+    "token": "aidigest",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "aligned",
+    "ats": "ashby",
+    "token": "aligned",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "allwyn-corp",
+    "ats": "ashby",
+    "token": "allwyn-corp",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "andromeda",
+    "ats": "ashby",
+    "token": "andromeda",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "arrive",
+    "ats": "ashby",
+    "token": "arrive",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "atlys",
+    "ats": "ashby",
+    "token": "atlys",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
