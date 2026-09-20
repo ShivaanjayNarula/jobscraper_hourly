@@ -107572,5 +107572,864 @@
     "token": "atlys",
     "industry": "tech",
     "source": "discovered"
+  },
+  {
+    "name": "Abstrabit Technologies Pvt Ltd",
+    "ats": "smartrecruiters",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "abstrabittechnologiespvtltd"
+  },
+  {
+    "name": "Acclaro",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "acclaro"
+  },
+  {
+    "name": "Adaptive Teams",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "adaptiveteams"
+  },
+  {
+    "name": "AI Acquisition",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "ai-acquisition"
+  },
+  {
+    "name": "Alphanumeric Systems",
+    "ats": "breezy",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "alphanumeric-systems"
+  },
+  {
+    "name": "Arctic Slope Regional Corporation",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-asrc.icims.com"
+  },
+  {
+    "name": "Blue Stout",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "blue-stout"
+  },
+  {
+    "name": "Botsync",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "botsync-1"
+  },
+  {
+    "name": "Bridge33 Capital",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "bridge33capital"
+  },
+  {
+    "name": "Careers at Belden",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers.belden.com"
+  },
+  {
+    "name": "Caxton Associates",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "caxton"
+  },
+  {
+    "name": "CEQUENS",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cequens"
+  },
+  {
+    "name": "Chemin",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "chemin"
+  },
+  {
+    "name": "CIMMYT",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cimmyt-1"
+  },
+  {
+    "name": "Civica",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "civica-uk-ltd-1"
+  },
+  {
+    "name": "Collective Residential",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "collectiveresidential"
+  },
+  {
+    "name": "Control Risks",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "control-risks-6"
+  },
+  {
+    "name": "Cooperidge Consulting Firm",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cooperidge-consulting-firm"
+  },
+  {
+    "name": "Coretek Services",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "coretek-services"
+  },
+  {
+    "name": "CoverGo",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "covergo"
+  },
+  {
+    "name": "CrewBloom",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "crewbloom"
+  },
+  {
+    "name": "Crop.photo",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "crop-photo-at-evolphin"
+  },
+  {
+    "name": "Cross Border Talents",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "crossbordertalents"
+  },
+  {
+    "name": "CXG",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cxg"
+  },
+  {
+    "name": "Dansk Industri",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "danskindustri"
+  },
+  {
+    "name": "Dulcedo Management",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "dulcedo"
+  },
+  {
+    "name": "Egon Zehnder",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "ezrecruiting"
+  },
+  {
+    "name": "ELSA",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "elsa"
+  },
+  {
+    "name": "Enable Data Incorporated",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "enable-data"
+  },
+  {
+    "name": "EnerMech",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "enermech"
+  },
+  {
+    "name": "Enfinity Global",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "enfinity-global-2"
+  },
+  {
+    "name": "Envalior",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "envalior"
+  },
+  {
+    "name": "Eram Talent",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "eramtalent-1"
+  },
+  {
+    "name": "Essel",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "esselenvironmental"
+  },
+  {
+    "name": "Euromonitor",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "euromonitor"
+  },
+  {
+    "name": "Euronet Worldwide, Inc.",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "euronet"
+  },
+  {
+    "name": "Every day Chemours",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "chemours",
+    "host": "wd103",
+    "site": "chemours"
+  },
+  {
+    "name": "Evidence Action",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "evidence-action"
+  },
+  {
+    "name": "Excelya",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "excelya"
+  },
+  {
+    "name": "Exponent Energy",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "exponent-energy"
+  },
+  {
+    "name": "Ext",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cree",
+    "host": "wd108",
+    "site": "ext"
+  },
+  {
+    "name": "FairMoney",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "fairmoney"
+  },
+  {
+    "name": "FE fundinfo",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "fe-fundinfo"
+  },
+  {
+    "name": "Fitch",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers.fitch.group"
+  },
+  {
+    "name": "Fresh Gravity",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "freshgravity"
+  },
+  {
+    "name": "G MASS",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "g-mass"
+  },
+  {
+    "name": "Genesis Orthopedics & Sports Medicine",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "genesisortho"
+  },
+  {
+    "name": "Genetec",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "genetec-inc"
+  },
+  {
+    "name": "Genius Agency AI",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "genusagencyai"
+  },
+  {
+    "name": "GoTymeX",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "gotymex"
+  },
+  {
+    "name": "GTECH Information Technology LLC",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "gtech"
+  },
+  {
+    "name": "HireRight",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-hireright1.icims.com"
+  },
+  {
+    "name": "Infinite Uptime India Pvt. ltd.",
+    "ats": "keka",
+    "token": "infiniteuptime",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Infuse Consulting Ltd",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "infuse-it"
+  },
+  {
+    "name": "Intellect",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "intellecthq"
+  },
+  {
+    "name": "Intellectsoft",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "intellectsoft"
+  },
+  {
+    "name": "Interpath Advisory",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "interpath-advisory"
+  },
+  {
+    "name": "ISYS Technologies, Inc.",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-i2xisys.icims.com"
+  },
+  {
+    "name": "ITRS",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "itrs"
+  },
+  {
+    "name": "Jobs at Indorama Ventures",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "jobs.indoramaventures.com"
+  },
+  {
+    "name": "KC Overseas Education",
+    "ats": "recruitee",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "kcoverseaseducation"
+  },
+  {
+    "name": "Learning Center",
+    "ats": "keka",
+    "token": "learningcenter",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Livenation (Tmexternalsite)",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "livenation",
+    "host": "wd503",
+    "site": "tmexternalsite"
+  },
+  {
+    "name": "MedScope Installation",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "medscope-installation"
+  },
+  {
+    "name": "Mindera",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "minderacraft"
+  },
+  {
+    "name": "Mindrift",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "toloka-ai"
+  },
+  {
+    "name": "MLabs",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "mlabs"
+  },
+  {
+    "name": "Mrsool",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "mrsool-3"
+  },
+  {
+    "name": "NextRoll",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "nextroll"
+  },
+  {
+    "name": "Nord Anglia Education",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers.nordangliaeducation.com"
+  },
+  {
+    "name": "NowVertical",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "nowverticalgroup"
+  },
+  {
+    "name": "NTT DATA, Europe & LATAM, Branch in USA, Inc.",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "nttdatausa"
+  },
+  {
+    "name": "One Of Us",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "one-of-us"
+  },
+  {
+    "name": "Paired",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "pairedrecruiting"
+  },
+  {
+    "name": "PEOPLECERT",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "peoplecert"
+  },
+  {
+    "name": "Perfetti Van Melle",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "jobs.perfettivanmelle.com"
+  },
+  {
+    "name": "Pitchbox",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "pitchbox"
+  },
+  {
+    "name": "Portainer.io",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "portainer"
+  },
+  {
+    "name": "Prizeout",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "prizeout"
+  },
+  {
+    "name": "Proficio",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "proficio-inc"
+  },
+  {
+    "name": "ProperExpression",
+    "ats": "breezy",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "proper-expression"
+  },
+  {
+    "name": "Protera",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "protera"
+  },
+  {
+    "name": "Reveal Health Tech",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "reveal-health-tech"
+  },
+  {
+    "name": "robusta",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "robusta"
+  },
+  {
+    "name": "Rockstar",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "rockstar-3"
+  },
+  {
+    "name": "Rockwellautomation (External Rockwell Automation Early Careers)",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "rockwellautomation",
+    "host": "wd1",
+    "site": "External-Rockwell-Automation-Early-Careers"
+  },
+  {
+    "name": "Rystad Energy",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "rystad-energy"
+  },
+  {
+    "name": "Sangoma",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "sangoma-3"
+  },
+  {
+    "name": "Scatec",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-scatec.icims.com"
+  },
+  {
+    "name": "Sleek",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-at-sleek"
+  },
+  {
+    "name": "Soar Software Development Company",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "soar-software-development-company"
+  },
+  {
+    "name": "SOGECLAIR",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "sogeclair"
+  },
+  {
+    "name": "Stibo Systems",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "stibosystems",
+    "host": "wd3",
+    "site": "careers-at-stibo-systems"
+  },
+  {
+    "name": "Substance | Level Up by Substance",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "getsubstance"
+  },
+  {
+    "name": "Sun Life (Experienced)",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "sunlife",
+    "host": "wd3",
+    "site": "experienced"
+  },
+  {
+    "name": "Syntiant",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "syntiant"
+  },
+  {
+    "name": "Tentworks Interactive",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "tentworks-interactive"
+  },
+  {
+    "name": "TestYantra Software Solutions",
+    "ats": "breezy",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "test-yantra-eu-2"
+  },
+  {
+    "name": "The Apprentice Project",
+    "ats": "keka",
+    "token": "tap",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "The Missing Link",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "the-missing-link"
+  },
+  {
+    "name": "TheSoul Group",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "thesoul-publishing-1"
+  },
+  {
+    "name": "This is Gain Ltd",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "thisisgain"
+  },
+  {
+    "name": "Thorlabs",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "thorlabs"
+  },
+  {
+    "name": "Tint",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "tintai"
+  },
+  {
+    "name": "Trackier",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "cloudstuff"
+  },
+  {
+    "name": "Trexquant Investment",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "trexquant"
+  },
+  {
+    "name": "Tryzens Global",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "tryzensglobal"
+  },
+  {
+    "name": "Turnitin, LLC",
+    "ats": "smartrecruiters",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "turnitinllc"
+  },
+  {
+    "name": "Umicore",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers.umicore.com"
+  },
+  {
+    "name": "Unison Group",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "unisongroup"
+  },
+  {
+    "name": "United Field Services, Inc.",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "united-field-services-inc"
+  },
+  {
+    "name": "Valsoft Corporation",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "valsoft-corp"
+  },
+  {
+    "name": "Vinmar International",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "vinmar-international"
+  },
+  {
+    "name": "Volga Partners",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "volga-partners"
+  },
+  {
+    "name": "WATI.io",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "wati-dot-i-o"
+  },
+  {
+    "name": "WaveStrong, Inc.",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "wavestrong"
+  },
+  {
+    "name": "Workforce Optimizer Pte Ltd",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "workforceoptimizer"
+  },
+  {
+    "name": "World Business Lenders, LLC",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "commercial-lending"
+  },
+  {
+    "name": "Writesonic",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "writesonic"
+  },
+  {
+    "name": "X-PHY",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "flexxon-1"
+  },
+  {
+    "name": "Zyte",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "zyte"
   }
 ]
