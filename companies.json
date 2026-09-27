@@ -108450,5 +108450,345 @@
     "token": "current-advisors",
     "industry": "tech",
     "source": "discovered"
+  },
+  {
+    "name": "47Billion",
+    "ats": "keka",
+    "token": "fourtyseven",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Ameren",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "ameren",
+    "host": "wd1",
+    "site": "external"
+  },
+  {
+    "name": "Bacr",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "bacr",
+    "host": "wd501",
+    "site": "bacr"
+  },
+  {
+    "name": "CareCentrix",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-carecentrix.icims.com"
+  },
+  {
+    "name": "Celebrus Technologies plc",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "celebrus"
+  },
+  {
+    "name": "Cellular Sales",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-cellularsales.icims.com"
+  },
+  {
+    "name": "D2B",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "d2b-1"
+  },
+  {
+    "name": "Digital",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "digital-368"
+  },
+  {
+    "name": "Grovergaming",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "lnw",
+    "host": "wd5",
+    "site": "grovergamingexternalcareersite"
+  },
+  {
+    "name": "Hyva",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "hyva",
+    "host": "wd3",
+    "site": "HyvaGroup"
+  },
+  {
+    "name": "InnovationTeam",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "innovationteam"
+  },
+  {
+    "name": "Irth Solutions",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "irth-solutions"
+  },
+  {
+    "name": "Javelin Global Commodities",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "javelin-global-commodities"
+  },
+  {
+    "name": "Kaufman Rossin",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "kaufmanrossin"
+  },
+  {
+    "name": "Lexlegis AI",
+    "ats": "breezy",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "lexlegis"
+  },
+  {
+    "name": "Lynn University",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "lynn",
+    "host": "wd5",
+    "site": "careers"
+  },
+  {
+    "name": "Maven",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "maven"
+  },
+  {
+    "name": "Maxwell Energy System Pvt Ltd",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "maxwellenergy"
+  },
+  {
+    "name": "Moolya Software Testing",
+    "ats": "keka",
+    "token": "moolya",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Müller`s Solutions",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "mullers-solutions-1"
+  },
+  {
+    "name": "NIVA Health",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "niva-health-2"
+  },
+  {
+    "name": "OnTarget Communications",
+    "ats": "recruitee",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "ontarget"
+  },
+  {
+    "name": "Origin",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "origin-10x"
+  },
+  {
+    "name": "Packt",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "packtpublishing"
+  },
+  {
+    "name": "PLNU",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "pointloma",
+    "host": "wd1",
+    "site": "PLNUCareers"
+  },
+  {
+    "name": "ProTrials Research, Inc.",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "protrials"
+  },
+  {
+    "name": "RateHawk",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "ratehawk"
+  },
+  {
+    "name": "RealmOne",
+    "ats": "taleo",
+    "token": "INVXIS",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Rolling Arrays Technologies",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "rollingarrays-tech"
+  },
+  {
+    "name": "Sandvik (Gibbscam Jobs)",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "sandvik",
+    "host": "wd3",
+    "site": "gibbscam-jobs"
+  },
+  {
+    "name": "SFS, Inc.",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-fdmfieldservices.icims.com"
+  },
+  {
+    "name": "Siegwerk, Siegwerk Jobs, Jobs in chemical industry, chemical industry jobs – Join the Global Leader in Ink and Packaging Solutions",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers.siegwerk.com"
+  },
+  {
+    "name": "Soar With Us",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "soar-with-us"
+  },
+  {
+    "name": "Squadio",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "squadio23"
+  },
+  {
+    "name": "STV",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "stvinc",
+    "host": "wd5",
+    "site": "stv"
+  },
+  {
+    "name": "Sur",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "surglobal"
+  },
+  {
+    "name": "sus",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "sus"
+  },
+  {
+    "name": "Trilitech",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "trilitech"
+  },
+  {
+    "name": "Trissential",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "trissential-jobs.icims.com"
+  },
+  {
+    "name": "Two95 International Inc.",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "two95-international-inc-3"
+  },
+  {
+    "name": "UNDP",
+    "ats": "oracle",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "estm",
+    "host": "fa.em2",
+    "siteNumber": "CX_1"
+  },
+  {
+    "name": "Vestwell",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "vestwell"
+  },
+  {
+    "name": "vetto",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "vetto"
+  },
+  {
+    "name": "Visit.org",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "visit"
+  },
+  {
+    "name": "Whizz",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "whizz"
+  },
+  {
+    "name": "ZainTECH",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "zaintech"
   }
 ]
