@@ -108359,5 +108359,96 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-09-27T10:01:24.737Z"
+  },
+  {
+    "name": "aottechnologies",
+    "ats": "greenhouse",
+    "token": "aottechnologies",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "astropakllc",
+    "ats": "greenhouse",
+    "token": "astropakllc",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "bbyo",
+    "ats": "greenhouse",
+    "token": "bbyo",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "comfrt",
+    "ats": "greenhouse",
+    "token": "comfrt",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "digitalocean98",
+    "ats": "greenhouse",
+    "token": "digitalocean98",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "acsjobs",
+    "ats": "greenhouse",
+    "token": "acsjobs",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "bolna",
+    "ats": "ashby",
+    "token": "bolna",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "butter",
+    "ats": "ashby",
+    "token": "butter",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "cardflight",
+    "ats": "ashby",
+    "token": "cardflight",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "cge",
+    "ats": "ashby",
+    "token": "cge",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "clerk",
+    "ats": "ashby",
+    "token": "clerk",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "clueso",
+    "ats": "ashby",
+    "token": "clueso",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "current-advisors",
+    "ats": "ashby",
+    "token": "current-advisors",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
