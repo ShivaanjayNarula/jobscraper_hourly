@@ -108726,5 +108726,12 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-10-02T10:01:45.183Z"
+  },
+  {
+    "name": "Armadin",
+    "ats": "ashby",
+    "token": "armadin",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
