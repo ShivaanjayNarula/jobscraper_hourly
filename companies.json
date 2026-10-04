@@ -108669,5 +108669,23 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-10-04T10:01:34.823Z"
+  },
+  {
+    "name": "ascendperformancematerials",
+    "ats": "workday",
+    "token": "ascendperformancematerials",
+    "host": "wd1",
+    "site": "Ascend",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "avisbudget",
+    "ats": "workday",
+    "token": "avisbudget",
+    "host": "wd1",
+    "site": "ABG_Careers",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
