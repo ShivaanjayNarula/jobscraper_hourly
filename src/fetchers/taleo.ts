@@ -56,17 +56,59 @@ interface Page {
   url: string;
 }
 
+import { route } from './routing.js';
+import { scraplingFetch } from './scrapling.js';
+
 async function fetchPage(url: string, cookie?: string): Promise<Page & { cookie: string }> {
-  const res = await fetch(url, {
-    headers: { 'user-agent': UA, accept: 'text/html', ...(cookie ? { cookie } : {}) },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  return {
-    html: await res.text(),
-    url: res.url,
-    cookie: cookie ?? res.headers.getSetCookie().map((c) => c.split(';')[0]).join('; '),
+  const headers: Record<string, string> = { 'user-agent': UA, accept: 'text/html' };
+  if (cookie) headers['cookie'] = cookie;
+
+  const primary = async () => {
+    const res = await scraplingFetch(url, {
+      method: 'GET',
+      headers,
+      engine: 'static',
+      timeout: TIMEOUT_MS / 1000,
+    });
+    if (!res.success) throw new Error(`Scrapling failed: ${res.error?.message}`);
+    if ((res.status ?? 200) >= 400) throw new Error(`${res.status} status for ${url}`);
+    
+    // Scrapling returns headers as a Record<string, string>. 
+    // set-cookie might be a single string (comma separated) or not present.
+    let newCookie = cookie;
+    if (!cookie && res.headers) {
+       const setCookie = res.headers['set-cookie'] || res.headers['Set-Cookie'];
+       if (setCookie) {
+          newCookie = setCookie.split(',').map(c => c.split(';')[0]).join('; ');
+       }
+    }
+    
+    return {
+      html: res.body ?? '',
+      url: res.url ?? url,
+      cookie: newCookie ?? '',
+    };
   };
+
+  const secondary = async () => {
+    const res = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+    return {
+      html: await res.text(),
+      url: res.url,
+      cookie: cookie ?? res.headers.getSetCookie().map((c) => c.split(';')[0]).join('; '),
+    };
+  };
+
+  return route({
+    mode: process.env.LEGACY_ONLY ? 'legacy-only' : 'scrapling-first',
+    method: 'GET',
+    primary,
+    secondary,
+  });
 }
 
 /**
