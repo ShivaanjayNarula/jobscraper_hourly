@@ -221,3 +221,16 @@ export function recordFailure(previous: BoardStatus | undefined, nowIso: string)
 export function recordSuccess(nowIso: string): BoardStatus {
   return { lastPolledAt: nowIso };
 }
+
+import { BLOCK_HOLD_DAYS, DROP_AFTER_FAILING_DAYS } from './config.js';
+import type { BlockKind } from './fetchers/block.js';
+
+export function shouldEvictBoard(
+  daysFailing: number,
+  blockKind: BlockKind | undefined,
+  isSuspectedOutage: boolean
+): { evict: boolean; heldByWall: boolean } {
+  const heldByWall = blockKind !== undefined && daysFailing < BLOCK_HOLD_DAYS;
+  const evict = daysFailing >= DROP_AFTER_FAILING_DAYS && !isSuspectedOutage && !heldByWall;
+  return { evict, heldByWall };
+}
