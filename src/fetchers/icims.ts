@@ -88,13 +88,37 @@ const PORTAL_TIMEOUT_MS = 30_000;
  *  bounded by the portal's own "Page X of Y" rather than by a row count. */
 const PORTAL_MAX_PAGES = 20;
 
+import { route } from './routing.js';
+import { scraplingFetch } from './scrapling.js';
+
 async function fetchHtml(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: { 'user-agent': UA, accept: 'text/html' },
-    signal: AbortSignal.timeout(PORTAL_TIMEOUT_MS),
+  const primary = async () => {
+    const res = await scraplingFetch(url, {
+      method: 'GET',
+      headers: { 'user-agent': UA, accept: 'text/html' },
+      engine: 'static',
+      timeout: PORTAL_TIMEOUT_MS / 1000,
+    });
+    if (!res.success) throw new Error(`Scrapling failed: ${res.error?.message}`);
+    if ((res.status ?? 200) >= 400) throw new Error(`${res.status} status for ${url}`);
+    return res.body ?? '';
+  };
+
+  const secondary = async () => {
+    const res = await fetch(url, {
+      headers: { 'user-agent': UA, accept: 'text/html' },
+      signal: AbortSignal.timeout(PORTAL_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+    return res.text();
+  };
+
+  return route({
+    mode: process.env.LEGACY_ONLY ? 'legacy-only' : 'scrapling-first',
+    method: 'GET',
+    primary,
+    secondary,
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  return res.text();
 }
 
 /**
