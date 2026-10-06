@@ -1,5 +1,7 @@
 import type { Company, RawJob } from '../types.js';
-import { curlJson, safeIso, toPlainText } from './util.js';
+import { safeIso, toPlainText, curlJson } from './util.js';
+import { scraplingJson } from './scrapling.js';
+import { route } from './routing.js';
 
 interface DarwinboxJob {
   id: string;
@@ -25,9 +27,9 @@ const PAGE_SIZE = 50;
 const MAX_PAGES = 12;
 
 /**
- * `created_on` is typed `string | number` because the API sends both across
+ * \`created_on\` is typed \`string | number\` because the API sends both across
  * tenants, and either shape can fail to parse. The guard itself now lives in
- * `util.ts` — every adapter needs the same rule — and is re-exported here so
+ * \`util.ts\` — every adapter needs the same rule — and is re-exported here so
  * the call sites and the regression suite that named this bug keep working.
  */
 export { safeIso } from './util.js';
@@ -46,10 +48,8 @@ export { safeIso } from './util.js';
  *     — a successful-looking empty result, not an error.
  *  2. It sits behind Cloudflare, which fingerprints the TLS/HTTP2 handshake —
  *     not just headers. Node's fetch is rejected with 403 no matter what headers
- *     you send (verified against plain, sec-fetch and accept-encoding variants);
- *     curl's handshake passes. So this one adapter shells out to curl, which is
- *     preinstalled on GitHub's runners. Ugly, but it's the difference between
- *     nine Indian employers being covered and not.
+ *     you send. We use Scrapling's static engine as the primary acquisition path
+ *     to pass this check, with system `curl` retained as a secondary fallback.
  *
  * Darwinbox's *documented* API needs a key issued by their integration team.
  * This is the unauthenticated endpoint the public careers widget itself calls.
@@ -63,8 +63,9 @@ async function post(company: Company, page: number): Promise<unknown> {
   const companyId = company.site ?? '';
   const url = `https://${company.token}.darwinbox.in/ms/candidateapi/job/alljobs?companyId=${companyId}`;
   const origin = `https://${company.token}.darwinbox.in`;
-  return curlJson(url, {
-    method: 'POST',
+  
+  const options = {
+    method: 'POST' as const,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json, text/plain, */*',
@@ -72,6 +73,19 @@ async function post(company: Company, page: number): Promise<unknown> {
       Referer: `${origin}/ms/candidate/careers`,
     },
     body: JSON.stringify({ companyId, page, sort_option: 'new', limit: PAGE_SIZE }),
+  };
+
+  return route({
+    adapter: 'darwinbox',
+    method: 'POST',
+    isReadOnlyPost: true,
+    primary: () => scraplingJson(url, options),
+    secondary: () => curlJson(url, options),
+    validate: (res: any) => {
+      if (!res || typeof res !== 'object') return false;
+      if (res.status === 'success' && Array.isArray(res.data)) return true;
+      return false;
+    }
   });
 }
 
