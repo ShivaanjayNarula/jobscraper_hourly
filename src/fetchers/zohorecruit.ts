@@ -1,5 +1,7 @@
 import type { Company, RawJob } from '../types.js';
 import { UA } from './util.js';
+import { scraplingFetch } from './scrapling.js';
+import { route } from './routing.js';
 
 interface ZohoJob {
   id: string;
@@ -29,12 +31,19 @@ function decodeNumericEntities(raw: string): string {
  * only in the SPA's client-rendered detail view, not fetched here.
  */
 export async function list(company: Company): Promise<RawJob[]> {
-  const res = await fetch(company.token, {
-    headers: { 'user-agent': UA, accept: 'text/html' },
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${company.token}`);
-  const html = await res.text();
+  const url = company.token;
+  const primary = async () => {
+    const res = await scraplingFetch(url, { method: 'GET', headers: { 'user-agent': UA, accept: 'text/html' }, engine: 'static', timeout: 30 });
+    if (!res.success) throw new Error(`Scrapling failed: ${res.error?.message}`);
+    if ((res.status ?? 200) >= 400) throw new Error(`${res.status} status for ${url}`);
+    return res.body ?? '';
+  };
+  const secondary = async () => {
+    const res = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html' }, signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+    return res.text();
+  };
+  const html = await route({ mode: process.env.LEGACY_ONLY ? 'legacy-only' : 'scrapling-first', method: 'GET', primary, secondary });
 
   const tagMatch = /<input[^>]*\bid="jobs"[^>]*>/i.exec(html);
   if (!tagMatch) return [];
