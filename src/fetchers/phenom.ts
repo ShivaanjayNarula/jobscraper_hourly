@@ -1,5 +1,5 @@
 import type { Company, RawJob } from '../types.js';
-import { toPlainText, UA } from './util.js';
+import { toPlainText, UA, getJson } from './util.js';
 
 interface PhenomJob {
   jobId?: string;
@@ -39,10 +39,11 @@ const MAX_PAGES = 8;
  * runs to tens of thousands of postings at companies this size.
  */
 async function page(company: Company, from: number): Promise<{ jobs: PhenomJob[]; total: number }> {
-  const res = await fetch(`https://${company.token}/widgets`, {
+  const body = await getJson<{
+    refineSearch?: { totalHits?: number; data?: { jobs?: PhenomJob[] } };
+  }>(`https://${company.token}/widgets`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'user-agent': UA, accept: 'application/json' },
-    signal: AbortSignal.timeout(30_000),
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       lang: 'en_us',
       deviceType: 'desktop',
@@ -64,10 +65,6 @@ async function page(company: Company, from: number): Promise<{ jobs: PhenomJob[]
     }),
   });
 
-  if (!res.ok) throw new Error(`phenom ${company.token} ${res.status}`);
-  const body = (await res.json()) as {
-    refineSearch?: { totalHits?: number; data?: { jobs?: PhenomJob[] } };
-  };
   return {
     jobs: body.refineSearch?.data?.jobs ?? [],
     total: body.refineSearch?.totalHits ?? 0,
