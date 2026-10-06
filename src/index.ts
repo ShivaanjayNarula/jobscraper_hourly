@@ -9,6 +9,7 @@ import { rampingCompanies } from './trends.js';
 import { updateCatalog, type CatalogEntry } from './catalog.js';
 import { CONCURRENCY, BLOCK_HOLD_DAYS, DROP_AFTER_FAILING_DAYS, limitForHost, MULTILOC_MAX_PER_BOARD, rateLimitKey } from './config.js';
 import { BlockError, type BlockKind } from './fetchers/block.js';
+import { extractBlockKind } from './fetchers/routing.js';
 import { boardKey } from './board-url.js';
 import { resolvePlaceholderLocations } from './fetchers/workday.js';
 import {
@@ -31,9 +32,10 @@ import {
   saveMultiLocations,
   saveOutageState,
   saveReposts,
-  saveVolumeDrops,
   saveSeen,
+  saveVolumeDrops,
   seedBoardState,
+  shouldEvictBoard,
   updateReposts,
 } from './state.js';
 import { extractSalary } from './salary.js';
@@ -49,7 +51,8 @@ import { selectBoards } from './select-boards.js';
 import { formatHostStats, persistentlySlow, summarizeHostStats, updateHistory, type PollTiming } from './host-stats.js';
 
 const nowIso = new Date().toISOString();
-const dryRun = process.env.DRY_RUN === '1';
+const shadowMode = process.env.SHADOW_MODE === '1';
+const dryRun = process.env.DRY_RUN === '1' || shadowMode;
 
 /**
  * Ignores the seen state so every current match counts as new, and persists
@@ -58,6 +61,8 @@ const dryRun = process.env.DRY_RUN === '1';
  */
 const testEmail = process.env.TEST_EMAIL === '1';
 
+import { routingDiagnostics, type RouteDiagnostics } from './fetchers/routing.js';
+
 interface BoardResult {
   company: Company;
   jobs: RawJob[];
@@ -65,24 +70,41 @@ interface BoardResult {
   /** Set when the error was a classified bot wall, not an ordinary failure. */
   blockKind?: BlockKind;
   durationMs: number;
+  primaryEngine?: string;
+  finalEngine?: string;
+  fallbackReason?: string;
 }
 
 async function pollBoard(company: Company, multiLocations: Record<string, string>): Promise<BoardResult> {
   const started = Date.now();
+  const parentDiag = routingDiagnostics.getStore();
+  const diag: RouteDiagnostics = { forceMode: parentDiag?.forceMode };
   try {
-    const jobs = await FETCHERS[company.ats].list(company);
+    const jobs = await routingDiagnostics.run(diag, async () => {
+      return FETCHERS[company.ats].list(company);
+    });
     if (company.ats === 'workday') {
       await resolvePlaceholderLocations(company, jobs, multiLocations, MULTILOC_MAX_PER_BOARD);
     }
-    return { company, jobs, durationMs: Date.now() - started };
+    return { 
+      company, 
+      jobs, 
+      durationMs: Date.now() - started,
+      primaryEngine: diag.primaryEngine,
+      finalEngine: diag.finalEngine,
+      fallbackReason: diag.fallbackReason
+    };
   } catch (error) {
     const err = error as Error;
     return {
       company,
       jobs: [],
       error: err.message,
-      blockKind: err instanceof BlockError ? err.kind : undefined,
+      blockKind: extractBlockKind(err) || (diag.failureClass as BlockKind),
       durationMs: Date.now() - started,
+      primaryEngine: diag.primaryEngine,
+      finalEngine: diag.finalEngine,
+      fallbackReason: diag.fallbackReason
     };
   }
 }
@@ -142,16 +164,49 @@ async function main(): Promise<void> {
       `(${selection.hot} hot, ${selection.cold} cold on rotation, ${selection.skipped} waiting)`,
   );
   const multiLocBefore = Object.keys(multiLocations).length;
-  const results = await mapLimitByKey(selection.polling, rateLimitKey, limitForHost, (c) =>
-    pollBoard(c, multiLocations),
-  );
+  const shadowReport: import('./shadow.js').ShadowReportEntry[] = [];
+  const { compareShadowResults } = await import('./shadow.js');
+
+  const results = await mapLimitByKey(selection.polling, rateLimitKey, limitForHost, async (c) => {
+    const primaryResult = await pollBoard(c, multiLocations);
+    if (shadowMode && Math.random() < 0.2) { // sample ~20%
+      const secondaryResult = await routingDiagnostics.run({ forceMode: 'legacy-only' }, async () => {
+        return pollBoard(c, multiLocations);
+      });
+      shadowReport.push(compareShadowResults(
+        c,
+        primaryResult.jobs,
+        primaryResult.error,
+        primaryResult.durationMs,
+        secondaryResult.jobs,
+        secondaryResult.error,
+        secondaryResult.durationMs
+      ));
+    }
+    return primaryResult;
+  });
+
+  if (shadowMode && shadowReport.length > 0) {
+    await mkdir('out', { recursive: true });
+    await writeFile('out/shadow-report.json', JSON.stringify(shadowReport, null, 2), 'utf8');
+    console.log(`wrote shadow comparison report for ${shadowReport.length} sampled boards`);
+  }
+
   const multiLocResolved = Object.keys(multiLocations).length - multiLocBefore;
   if (multiLocResolved > 0) {
     console.log(`resolved ${multiLocResolved} new workday multi-location postings (${multiLocBefore + multiLocResolved} cached total)`);
   }
 
   const hostStats = summarizeHostStats(
-    results.map((r): PollTiming => ({ key: rateLimitKey(r.company), durationMs: r.durationMs, error: r.error })),
+    results.map((r): PollTiming => ({ 
+      key: rateLimitKey(r.company), 
+      durationMs: r.durationMs, 
+      error: r.error,
+      primaryEngine: r.primaryEngine,
+      finalEngine: r.finalEngine,
+      fallbackReason: r.fallbackReason,
+      failureClass: r.blockKind
+    })),
   );
   console.log(`slowest hosts this run (p95, worst first):\n${formatHostStats(hostStats)}`);
 
@@ -256,8 +311,8 @@ async function main(): Promise<void> {
        * board on an otherwise-healthy ATS. `BLOCK_HOLD_DAYS` bounds the
        * staleness so a permanently walled board still exits eventually.
        */
-      const heldByWall = blockKind !== undefined && days < BLOCK_HOLD_DAYS;
-      if (days >= DROP_AFTER_FAILING_DAYS && !suspectedOutage.has(company.ats) && !heldByWall) {
+      const { evict, heldByWall } = shouldEvictBoard(days, blockKind, suspectedOutage.has(company.ats));
+      if (evict) {
         dropped.push(company.name);
         delete nextBoardState[key];
       } else {
