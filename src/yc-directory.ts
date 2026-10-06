@@ -18,10 +18,21 @@
 import { getJson } from './fetchers/util.js';
 
 const APP_ID = '45BWZJ1SGC';
-const API_KEY =
-  'NzllNTY5MzJiZGM2OTY2ZTQwMDEzOTNhYWZiZGRjODlhYzVkNjBmOGRjNzJiMWM4ZTU0ZDlhYTZjOTJiMjlhMWFuYWx5dGljc1RhZ3M9eWNkYyZyZXN0cmljdEluZGljZXM9WUNDb21wYW55X3Byb2R1Y3Rpb24lMkNZQ0NvbXBhbnlfQnlfTGF1bmNoX0RhdGVfcHJvZHVjdGlvbiZ0YWdGaWx0ZXJzPSU1QiUyMnljZGNfcHVibGljJTIyJTVE';
 const INDEX = 'YCCompany_production';
 const HITS_PER_PAGE = 1000; // Algolia's own cap for this index; ~5 pages covers the whole directory.
+
+let API_KEY: string | undefined;
+
+async function getApiKey(): Promise<string> {
+  if (API_KEY) return API_KEY;
+  const res = await fetch('https://www.ycombinator.com/companies');
+  if (!res.ok) throw new Error(`Failed to fetch YC directory page: ${res.status}`);
+  const html = await res.text();
+  const match = html.match(/"([A-Za-z0-9]{150,300})"/);
+  if (!match) throw new Error('Could not find Algolia API key in YC directory page');
+  API_KEY = match[1] as string;
+  return API_KEY;
+}
 
 export interface YCCompany {
   name: string;
@@ -50,6 +61,7 @@ interface AlgoliaResponse {
  */
 export async function fetchYCCompanies(opts: { region?: string; activeOnly?: boolean } = {}): Promise<YCCompany[]> {
   const out: YCCompany[] = [];
+  const apiKey = await getApiKey();
   for (let page = 0; ; page++) {
     const params = new URLSearchParams({ query: '', hitsPerPage: String(HITS_PER_PAGE), page: String(page) });
     if (opts.region) params.set('facetFilters', JSON.stringify([[`regions:${opts.region}`]]));
@@ -58,7 +70,7 @@ export async function fetchYCCompanies(opts: { region?: string; activeOnly?: boo
       method: 'POST',
       headers: {
         'x-algolia-application-id': APP_ID,
-        'x-algolia-api-key': API_KEY,
+        'x-algolia-api-key': apiKey,
         'content-type': 'application/json',
       },
       body: JSON.stringify({ requests: [{ indexName: INDEX, params: params.toString() }] }),
