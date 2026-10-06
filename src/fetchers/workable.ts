@@ -1,5 +1,7 @@
 import type { Company, RawJob } from '../types.js';
 import { getJson, toPlainText, UA } from './util.js';
+import { route } from './routing.js';
+import { scraplingFetch } from './scrapling.js';
 
 interface WorkableLocation {
   country?: string;
