@@ -1,5 +1,7 @@
 import type { Company, RawJob } from '../types.js';
 import { toPlainText, UA } from './util.js';
+import { route } from './routing.js';
+import { scraplingFetch } from './scrapling.js';
 
 function tag(block: string, name: string): string | undefined {
   const m = new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(block);
