@@ -1,5 +1,5 @@
 import type { Company, RawJob } from '../types.js';
-import { toPlainText, UA } from './util.js';
+import { toPlainText, getJson, UA } from './util.js';
 
 interface TurboJob {
   JobId: string;
