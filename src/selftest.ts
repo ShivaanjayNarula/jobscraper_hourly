@@ -41,7 +41,7 @@ import { readJson } from './state.js';
 import { EventEmitter } from 'node:events';
 import { readReply } from './verify-email.js';
 import { SIGNATURE } from './outreach.js';
-import { cleanSubject, commitKind, connectQuota, connectTier, factLine, followUpLine, groupConnects, hookKey, linkedinSearchUrl, mergePool, poolToBatch, registryFactLine, section, variablePart, weeklyConnects } from './outreach.js';
+import { cleanSubject, coldConnectId, commitKind, connectQuota, connectTier, dailyConnects, domainOwner, factLine, greetingName, ownedDomains, followUpLine, groupConnects, hookKey, linkedinSearchUrl, mergePool, poolToBatch, registryFactLine, section, variablePart, weeklyConnects } from './outreach.js';
 import { bodySimilarity, bounceGateDecision, buildFirstDraft, displayName, domainRiskTally, enforceSimilarity, isTriggered, loadCompanyPool, postedAgeDays, renderBody, touchGap, TRIGGER_WINDOW_DAYS, type CatalogJob } from './outreach.js';
 import { applyboltLookup, extractEmails, extractLeadership, packageNameCandidates, parseApplyBolt, parseDmarcRua, roleAddresses } from './contact-sources.js';
 import { controlAddress, mxProvider, rejectionIsMeaningful } from './verify-email.js';
@@ -707,9 +707,9 @@ console.log('host history (rolling worst-N persistence)');
 // updateHistory takes stats.slice(0, WORST_N=3) as-is (already worst-first
 // from summarizeHostStats), so this run needs >3 hosts for "never worst" to
 // mean anything — with only 2 entries both would land in the top 3.
-const alwaysWorst = { key: 'wd504', count: 1, errors: 0, p50: 1, p95: 1 };
-const filler = (key: string) => ({ key, count: 1, errors: 0, p50: 1, p95: 1 });
-const neverWorst = { key: 'greenhouse', count: 1, errors: 0, p50: 1, p95: 1 };
+const alwaysWorst = { key: 'wd504', count: 1, errors: 0, p50: 1, p95: 1, failureClasses: [] };
+const filler = (key: string) => ({ key, count: 1, errors: 0, p50: 1, p95: 1, failureClasses: [] });
+const neverWorst = { key: 'greenhouse', count: 1, errors: 0, p50: 1, p95: 1, failureClasses: [] };
 const runStats = [alwaysWorst, filler('a'), filler('b'), neverWorst];
 let history: Record<string, boolean[]> = {};
 for (let i = 0; i < 6; i++) history = updateHistory(history, runStats);
@@ -1140,6 +1140,53 @@ check(
   true,
 );
 
+console.log('the wrong Apollo, and the npm handle used as a first name');
+// Both taught by one real draft: "Hello Glasser," sent to an Apollo GraphQL
+// maintainer about an Analyst role in Mumbai at an entirely different Apollo.
+//
+// Containment alone was the collision. "apollo" is a substring of
+// "apollographql", so the npm rung's domain guard accepted a US
+// developer-tools company as the Indian employer in the catalogue.
+// Tightening the name test itself was tried, measured against
+// state/contact-sweep.json and reverted — it rejected 100 of 1,637 already
+// matched pairs, nearly all of them correct. So the name test still accepts
+// this, on purpose:
+check('a name match alone still accepts the wrong Apollo', domainMatchesOrg('Apollo', 'apollographql.com'), true);
+
+// The corpus is what knows better. Apollo GraphQL is tracked here as its own
+// company with apollographql.com as its sweep-matched domain, so that domain
+// is a fact about a different company, not a guess about this one.
+{
+  const owners = ownedDomains(
+    Object.entries({
+      'apollo graphql': { org: 'apollographql', domain: 'apollographql.com', matched: true },
+      apollo: { org: null, domain: null, matched: false },
+      calico: { org: 'calico', domain: 'calicolabs.com', matched: true },
+      // An unmatched row records whatever the commits showed, which may be an
+      // outside contributor's domain — vetoing on it would spread one bad row
+      // across every company sharing that domain.
+      someco: { org: 'someco', domain: 'shared.com', matched: false },
+    }) as never,
+  );
+  check('a domain owned by another tracked company is vetoed', domainOwner(owners, 'Apollo', 'glasser@apollographql.com'), 'apollo graphql');
+  check('the owner itself is not vetoed', domainOwner(owners, 'Apollo GraphQL', 'glasser@apollographql.com'), null);
+  check('a domain nobody else claims passes', domainOwner(owners, 'Apollo', 'someone@apollo-athene.com'), null);
+  check('and the company keeps its own name-matched domain', domainOwner(owners, 'Calico', 'someone@calicolabs.com'), null);
+  check('an unmatched sweep row claims nothing', domainOwner(owners, 'Otherco', 'someone@shared.com'), null);
+}
+
+// A greeting is only as good as the name behind it. npm carries handles and
+// the website scan falls back to an email local part, so a single token is
+// refused rather than capitalised and used as a first name.
+check('an npm handle is not a first name', greetingName('glasser'), null);
+check('nor a lone surname', greetingName('Glasser'), null);
+check('a real full name is', greetingName('David Glasser'), 'David');
+check('a lowercase one is capitalised', greetingName('max mansfield'), 'Max');
+check('an email local part splits on its separator', greetingName('david.glasser'), 'David');
+check('and on an underscore or hyphen', greetingName('priya_nair'), 'Priya');
+check('an initial is not a name to greet by', greetingName('D. Glasser'), null);
+check('nor is anything carrying digits', greetingName('user123.smith'), null);
+
 console.log('weekly linkedin list');
 // Search urls only — this project never fetches LinkedIn (CONTACT-DISCOVERY.md
 // section 9). The human clicks through, already signed in, and sends it.
@@ -1264,6 +1311,48 @@ console.log('publish merge never forgets a click');
   check('locally computed research fields survive too', merged['a@x.com']?.verdict, 'valid');
   check('a contact only the remote knows about is kept', merged['clicked@x.com']?.bounced, true);
   check('a contact only the local build knows about is kept', 'new@x.com' in merged, true);
+}
+
+console.log('the daily cold connect block');
+// The mailed list is bounded by how much mail has gone out, which leaves most
+// of a 100-a-week invitation budget unused. This block fills it with named
+// senior people at companies hiring right now.
+{
+  const lead = new Map([
+    ['hiringco', { contacts: [
+      { name: 'Ravi Menon', title: 'Talent Acquisition Lead' },
+      { name: 'Anu Iyer', title: 'CTO' },
+      { name: 'Some Engineer', title: 'Senior Software Engineer' },
+    ] }],
+    ['quietco', { contacts: [{ name: 'Nobody Hiring', title: 'CEO' }] }],
+  ]);
+  const openRoles = new Map([['hiringco', 6]]);
+  const cold = dailyConnects({} as never, lead as never, openRoles, { seed: 'x' });
+  const names = cold.map((r) => r.name).sort().join(',');
+  // An open role is the reason the request makes sense, so a company with none
+  // is not offered at all — and a peer engineer is dropped rather than ranked
+  // last, because a cold request to a peer is the weakest thing on the page.
+  check('only companies with an open role, and only useful tiers', names, 'Anu Iyer,Ravi Menon');
+  check('nobody is marked as mailed', cold.every((r) => r.daysSinceSent === -1), true);
+
+  // Marking one sent must retire them permanently — this is the only record
+  // that the request happened, and their id is not an address.
+  const id = coldConnectId('hiringco', 'Ravi Menon');
+  check('the id is namespaced, not an address', id.startsWith('li:') && !id.includes('@'), true);
+  const after = dailyConnects({ [id]: { connectedAt: '2026-09-01T00:00:00.000Z' } } as never, lead as never, openRoles, { seed: 'x' });
+  check('somebody already connected to is not offered again', after.map((r) => r.name).join(','), 'Anu Iyer');
+  // Anyone already on the mailed list is not offered twice in one sitting.
+  check('the mailed list wins a duplicate', dailyConnects({} as never, lead as never, openRoles, { seed: 'x', exclude: [id] }).map((r) => r.name).join(','), 'Anu Iyer');
+
+  // The pool is far larger than a day's budget, so a stable sort would offer
+  // the same people every day forever. Nothing records a mere offer.
+  const big = new Map([['hiringco', { contacts: Array.from({ length: 60 }, (_, i) => ({ name: `Person ${i}`, title: 'Recruiter' })) }]]);
+  const day1 = dailyConnects({} as never, big as never, openRoles, { seed: '2026-09-08', limit: 12 });
+  const day2 = dailyConnects({} as never, big as never, openRoles, { seed: '2026-09-09', limit: 12 });
+  check('the daily limit is respected', day1.length, 12);
+  check('and the rotation actually moves', day1.map((r) => r.name).join(',') === day2.map((r) => r.name).join(','), false);
+  check('but a given day is reproducible', dailyConnects({} as never, big as never, openRoles, { seed: '2026-09-08', limit: 12 }).map((r) => r.name).join(','), day1.map((r) => r.name).join(','));
+  check('nothing is offered with no budget left', dailyConnects({} as never, big as never, openRoles, { seed: 'x', limit: 0 }).length, 0);
 }
 
 console.log('state reads never fake an empty file');
@@ -2050,6 +2139,62 @@ check('an empty location stays empty rather than becoming ", India"', normalizeL
 check('the page count is read from the portal', pageCount('<div>Search Results Page 1 of 7</div>'), 7);
 check('a single-page board reports one', pageCount('<div>Page 1 of 1</div>'), 1);
 check('a portal with no paging text still reports one', pageCount('<div>nothing here</div>'), 1);
+
+import { FallbackError, extractBlockKind } from './fetchers/routing.js';
+
+console.log('SC-07: block and outage semantics');
+
+// "both fail with challenge retains bounded block hold"
+const wallA = new BlockError({ kind: 'challenge', vendor: 'cloudflare' }, 403, 'x');
+const wallB = new BlockError({ kind: 'waf_block', vendor: 'datadome' }, 403, 'y');
+check(
+  'both fail with challenge retains bounded block hold',
+  extractBlockKind(new FallbackError('both', wallA, wallB)),
+  'challenge'
+);
+
+// "fallback 404 plus primary wall retains both causes" (meaning the wall is not extracted, 404 takes precedence for eviction)
+const authFail = new Error('404 Not Found');
+check(
+  'genuine invalid tenant follows existing eviction policy (404 overrides wall)',
+  extractBlockKind(new FallbackError('both', wallA, authFail)),
+  undefined
+);
+
+const infraFail = new Error('Python missing');
+check(
+  'infrastructure failure plus wall retains bounded block hold',
+  extractBlockKind(new FallbackError('both', infraFail, wallA)),
+  'challenge'
+);
+
+import { shouldEvictBoard } from './state.js';
+
+check(
+  'board fails and day limit not reached (hold)',
+  shouldEvictBoard(2, undefined, false).evict,
+  false
+);
+check(
+  'board fails and day limit reached (evict)',
+  shouldEvictBoard(3, undefined, false).evict,
+  true
+);
+check(
+  'bot wall holds past day 3',
+  shouldEvictBoard(3, 'challenge', false).evict,
+  false
+);
+check(
+  'bot wall hold expires eventually',
+  shouldEvictBoard(14, 'challenge', false).evict,
+  true
+);
+check(
+  'suspected outage prevents eviction',
+  shouldEvictBoard(4, undefined, true).evict,
+  false
+);
 
 console.log(failures === 0 ? '\nall checks pass' : `\n${failures} failing check(s)`);
 process.exit(failures === 0 ? 0 : 1);
