@@ -1,5 +1,7 @@
 import type { Company, RawJob } from '../types.js';
 import { getJson, toPlainText, UA } from './util.js';
+import { route } from './routing.js';
+import { scraplingFetch } from './scrapling.js';
 
 interface WdPosting {
   title: string;
@@ -204,13 +206,14 @@ interface JobPostingInfo {
 async function fetchDetail(company: Company, job: { url: string }): Promise<JobPostingInfo | undefined> {
   const path = job.url.split(`/${company.site}`)[1];
   if (!path) return undefined;
-  const res = await fetch(
-    `${base(company)}/wday/cxs/${company.token}/${company.site}${path}`,
-    { headers: { 'user-agent': UA, accept: 'application/json' }, signal: AbortSignal.timeout(30_000) },
-  );
-  if (!res.ok) return undefined;
-  const data = (await res.json()) as { jobPostingInfo?: JobPostingInfo };
-  return data.jobPostingInfo;
+  try {
+    const data = await getJson<{ jobPostingInfo?: JobPostingInfo }>(
+      `${base(company)}/wday/cxs/${company.token}/${company.site}${path}`
+    );
+    return data.jobPostingInfo;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function enrich(company: Company, job: RawJob): Promise<string | undefined> {
