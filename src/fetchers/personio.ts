@@ -97,16 +97,41 @@ export function parsePositions(xml: string, token: string): RawJob[] {
   return jobs;
 }
 
+import { route } from './routing.js';
+import { scraplingFetch } from './scrapling.js';
+
 export async function list(company: Company): Promise<RawJob[]> {
   const url = `https://${company.token}.jobs.personio.de/xml`;
-  const res = await fetch(url, {
-    headers: { 'user-agent': UA, accept: 'application/xml, text/xml' },
-    signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+  
+  const primary = async () => {
+    const res = await scraplingFetch(url, {
+      method: 'GET',
+      headers: { 'user-agent': UA, accept: 'application/xml, text/xml' },
+      engine: 'static',
+      timeout: FEED_TIMEOUT_MS / 1000,
+    });
+    if (!res.success) throw new Error(`Scrapling failed: ${res.error?.message}`);
+    if ((res.status ?? 200) >= 400) throw new Error(`${res.status} status for ${url}`);
+    const xml = res.body ?? '';
+    if (!xml.includes('<workzag-jobs')) throw new Error(`not a Personio feed: ${url}`);
+    return parsePositions(xml, company.token);
+  };
+
+  const secondary = async () => {
+    const res = await fetch(url, {
+      headers: { 'user-agent': UA, accept: 'application/xml, text/xml' },
+      signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+    const xml = await res.text();
+    if (!xml.includes('<workzag-jobs')) throw new Error(`not a Personio feed: ${url}`);
+    return parsePositions(xml, company.token);
+  };
+
+  return route({
+    mode: process.env.LEGACY_ONLY ? 'legacy-only' : 'scrapling-first',
+    method: 'GET',
+    primary,
+    secondary,
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-
-  const xml = await res.text();
-  if (!xml.includes('<workzag-jobs')) throw new Error(`not a Personio feed: ${url}`);
-
-  return parsePositions(xml, company.token);
 }
