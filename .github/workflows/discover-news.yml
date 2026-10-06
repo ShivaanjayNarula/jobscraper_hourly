@@ -27,6 +27,17 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Scrapling
+        continue-on-error: true
+        run: |
+          pip install "scrapling[fetchers]==0.4.15" playwright
+          playwright install --with-deps chromium
+
       - run: npm install --no-audit --no-fund
 
       - id: discover-news
