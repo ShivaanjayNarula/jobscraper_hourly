@@ -1,0 +1,36 @@
+name: Scrapling validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm ci
+      - name: Install both browser runtimes
+        run: |
+          python -m pip install "scrapling[fetchers]==0.4.15"
+          python -m playwright install --with-deps chromium
+          npx playwright install --with-deps chromium
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Existing regression suite
+        run: npm test
+      - name: Rendered regression tests
+        run: npm run test:rendered
+      - name: Browser worker regression tests
+        run: npm run test:browser-worker
+      - name: Live Uber debug
+        run: npm run debug -- Uber
