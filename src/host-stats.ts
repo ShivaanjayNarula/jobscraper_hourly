@@ -10,6 +10,10 @@ export interface PollTiming {
   key: string;
   durationMs: number;
   error?: string;
+  primaryEngine?: string;
+  finalEngine?: string;
+  fallbackReason?: string;
+  failureClass?: string;
 }
 
 export interface HostStat {
@@ -18,22 +22,33 @@ export interface HostStat {
   errors: number;
   p50: number;
   p95: number;
+  primaryEngine?: string;
+  finalEngine?: string;
+  failureClasses: string[];
 }
 
 export function summarizeHostStats(results: readonly PollTiming[]): HostStat[] {
-  const byKey = new Map<string, { durations: number[]; errors: number }>();
-  for (const { key, durationMs, error } of results) {
-    const bucket = byKey.get(key) ?? { durations: [], errors: 0 };
+  const byKey = new Map<string, { durations: number[]; errors: number; engines: Set<string>; finalEngines: Set<string>; failureClasses: Set<string> }>();
+  for (const { key, durationMs, error, primaryEngine, finalEngine, failureClass } of results) {
+    const bucket = byKey.get(key) ?? { durations: [], errors: 0, engines: new Set(), finalEngines: new Set(), failureClasses: new Set() };
     bucket.durations.push(durationMs);
     if (error) bucket.errors++;
+    if (primaryEngine) bucket.engines.add(primaryEngine);
+    if (finalEngine) bucket.finalEngines.add(finalEngine);
+    if (failureClass) bucket.failureClasses.add(failureClass);
     byKey.set(key, bucket);
   }
 
   const stats: HostStat[] = [];
-  for (const [key, { durations, errors }] of byKey) {
+  for (const [key, { durations, errors, engines, finalEngines, failureClasses }] of byKey) {
     const sorted = [...durations].sort((a, b) => a - b);
     const at = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))] ?? 0;
-    stats.push({ key, count: sorted.length, errors, p50: at(0.5), p95: at(0.95) });
+    stats.push({
+      key, count: sorted.length, errors, p50: at(0.5), p95: at(0.95),
+      primaryEngine: [...engines].join(','),
+      finalEngine: [...finalEngines].join(','),
+      failureClasses: [...failureClasses]
+    });
   }
   return stats.sort((a, b) => b.p95 - a.p95);
 }
@@ -42,7 +57,11 @@ export function summarizeHostStats(results: readonly PollTiming[]): HostStat[] {
 export function formatHostStats(stats: readonly HostStat[], limit = 10): string {
   return stats
     .slice(0, limit)
-    .map((s) => `    ${s.key.padEnd(20)} p50 ${String(s.p50).padStart(5)}ms  p95 ${String(s.p95).padStart(5)}ms  ${s.errors}/${s.count} errors`)
+    .map((s) => {
+      const eng = s.primaryEngine ? ` [${s.primaryEngine}->${s.finalEngine}]` : '';
+      const fails = s.failureClasses.length ? ` (${s.failureClasses.join(', ')})` : '';
+      return `    ${s.key.padEnd(20)} p50 ${String(s.p50).padStart(5)}ms  p95 ${String(s.p95).padStart(5)}ms  ${s.errors}/${s.count} errors${eng}${fails}`;
+    })
     .join('\n');
 }
 
