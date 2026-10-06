@@ -5,6 +5,12 @@ import type { Company } from './types.js';
  * it is much easier to notice noise than to notice a job you never saw.
  */
 
+/** Operational switch to bypass Scrapling globally and use legacy engines. */
+export const LEGACY_ONLY = process.env.LEGACY_ONLY === '1';
+
+/** Cohorts enabled for Scrapling primary routing. */
+export const SCRAPLING_COHORTS = ['darwinbox'];
+
 /** Keep roles at or below this many years. Postings with no stated years are kept. */
 export const MAX_YEARS = 3;
 
