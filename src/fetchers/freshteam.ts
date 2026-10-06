@@ -1,3 +1,6 @@
+import { route } from './routing.js';
+import { scraplingFetch } from './scrapling.js';
+
 import type { Company, RawJob } from '../types.js';
 import { toPlainText, UA } from './util.js';
 
@@ -12,6 +15,36 @@ import { toPlainText, UA } from './util.js';
  * slug, not the real title — the real title is the visible text in a
  * following `.job-title` div, so both get pulled from the same regex pass.
  */
+async function fetchHtml(url: string): Promise<string> {
+  const primary = async () => {
+    const res = await scraplingFetch(url, {
+      method: 'GET',
+      headers: { 'user-agent': UA, accept: 'text/html' },
+      engine: 'static',
+      timeout: 30,
+    });
+    if (!res.success) throw new Error(`Scrapling failed: ${res.error?.message}`);
+    if ((res.status ?? 200) >= 400) throw new Error(`${res.status} status for ${url}`);
+    return res.body ?? '';
+  };
+
+  const secondary = async () => {
+    const res = await fetch(url, {
+      headers: { 'user-agent': UA, accept: 'text/html' },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+    return res.text();
+  };
+
+  return route({
+    mode: process.env.LEGACY_ONLY ? 'legacy-only' : 'scrapling-first',
+    method: 'GET',
+    primary,
+    secondary,
+  });
+}
+
 export async function list(company: Company): Promise<RawJob[]> {
   const url = `https://${company.token}.freshteam.com/jobs`;
   const res = await fetch(url, {
