@@ -13,13 +13,37 @@ import { toPlainText, UA } from './util.js';
  */
 const FEED_TIMEOUT_MS = 180_000;
 
+import { scraplingFetch } from './scrapling.js';
+import { route } from './routing.js';
+
 async function fetchXml(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: { 'user-agent': UA, accept: 'application/xml, text/xml' },
-    signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+  const primary = async () => {
+    const res = await scraplingFetch(url, {
+      method: 'GET',
+      headers: { 'user-agent': UA, accept: 'application/xml, text/xml' },
+      engine: 'static',
+      timeout: FEED_TIMEOUT_MS / 1000,
+    });
+    if (!res.success) throw new Error(`Scrapling failed: ${res.error?.message}`);
+    if ((res.status ?? 200) >= 400) throw new Error(`${res.status} status for ${url}`);
+    return res.body ?? '';
+  };
+
+  const secondary = async () => {
+    const res = await fetch(url, {
+      headers: { 'user-agent': UA, accept: 'application/xml, text/xml' },
+      signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+    return res.text();
+  };
+
+  return route({
+    mode: process.env.LEGACY_ONLY ? 'legacy-only' : 'scrapling-first',
+    method: 'GET',
+    primary,
+    secondary,
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  return res.text();
 }
 
 function tag(block: string, name: string): string | undefined {
