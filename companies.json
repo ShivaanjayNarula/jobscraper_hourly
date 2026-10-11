@@ -108557,5 +108557,47 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-10-08T19:01:58.576Z"
+  },
+  {
+    "name": "aspenviewtech",
+    "ats": "greenhouse",
+    "token": "aspenviewtech",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "barkleyokrp",
+    "ats": "greenhouse",
+    "token": "barkleyokrp",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "gismart",
+    "ats": "ashby",
+    "token": "gismart",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "Hippocratic%20AI",
+    "ats": "ashby",
+    "token": "Hippocratic%20AI",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "hyphametrics",
+    "ats": "ashby",
+    "token": "hyphametrics",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "intangible.ai",
+    "ats": "ashby",
+    "token": "intangible.ai",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
