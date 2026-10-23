@@ -108443,5 +108443,12 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-10-08T19:01:58.576Z"
+  },
+  {
+    "name": "Firstwork",
+    "ats": "ashby",
+    "token": "firstwork",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
