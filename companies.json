@@ -108450,5 +108450,56 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-10-08T19:01:58.576Z"
+  },
+  {
+    "name": "thltestcareers",
+    "ats": "greenhouse",
+    "token": "thltestcareers",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "tpgcareers",
+    "ats": "greenhouse",
+    "token": "tpgcareers",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "workera",
+    "ats": "greenhouse",
+    "token": "workera",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "cemd",
+    "ats": "greenhouse",
+    "token": "cemd",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "cialfo",
+    "ats": "greenhouse",
+    "token": "cialfo",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "cogresearchfoundation",
+    "ats": "greenhouse",
+    "token": "cogresearchfoundation",
+    "industry": "tech",
+    "source": "discovered"
+  },
+  {
+    "name": "hysteryale",
+    "ats": "workday",
+    "token": "hysteryale",
+    "host": "wd1",
+    "site": "Hyster-YaleCareers",
+    "industry": "tech",
+    "source": "discovered"
   }
 ]
