@@ -109984,5 +109984,221 @@
     "source": "discovered",
     "token": "civilgrid",
     "lastIndiaAt": "2026-11-08T11:01:44.949Z"
+  },
+  {
+    "name": "MixMode",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "mixmode"
+  },
+  {
+    "name": "Climate Cabinet",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "climatecabinet"
+  },
+  {
+    "name": "Helium 10",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "helium10"
+  },
+  {
+    "name": "Keebo",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "keebo"
+  },
+  {
+    "name": "Keyfactor, Inc.",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "keyfactorinc"
+  },
+  {
+    "name": "Panther Life Sciences",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "panther-life-sciences"
+  },
+  {
+    "name": "Tellos, Inc.",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "tellos"
+  },
+  {
+    "name": "HubSpot",
+    "ats": "greenhouse",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "hubspotjobs"
+  },
+  {
+    "name": "Spruce Systems, Inc.",
+    "ats": "ashby",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "spruceid"
+  },
+  {
+    "name": "AngelList",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "angellist"
+  },
+  {
+    "name": "CodeNinja",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "codeninjapk"
+  },
+  {
+    "name": "BRYTER",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "bryter"
+  },
+  {
+    "name": "H Clarkson & Company Ltd",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers.clarksons.com"
+  },
+  {
+    "name": "Tandems",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "tandems"
+  },
+  {
+    "name": "Redwood Strategy Group, Inc.",
+    "ats": "lever",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "redwoodstrategygroup"
+  },
+  {
+    "name": "Elavate",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "elavate"
+  },
+  {
+    "name": "Full Fabric",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "fullfabricspoonsixlimited"
+  },
+  {
+    "name": "dormakaba International Holding AG",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "jobs.dormakaba.com"
+  },
+  {
+    "name": "SICPA",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "jobs.sicpa.com"
+  },
+  {
+    "name": "Komatsu",
+    "ats": "successfactors",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "komatsu.jobs"
+  },
+  {
+    "name": "OPTIVEUM sp. z o.o.",
+    "ats": "teamtailor",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "optiveumspzoo"
+  },
+  {
+    "name": "Rollsroyce (Intern Graduate)",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "rollsroyce",
+    "host": "wd3",
+    "site": "Intern_Graduate"
+  },
+  {
+    "name": "Resolution Life",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "resolutionlife",
+    "host": "wd5",
+    "site": "resolutionlife_jobs"
+  },
+  {
+    "name": "Ippf",
+    "ats": "personio",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "ippf"
+  },
+  {
+    "name": "Openprovider",
+    "ats": "personio",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "openprovider"
+  },
+  {
+    "name": "invygo",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "invygo"
+  },
+  {
+    "name": "Zayo",
+    "ats": "workday",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "zayo",
+    "host": "wd1",
+    "site": "zayo_careers"
+  },
+  {
+    "name": "Drugs for Neglected Diseases initiative",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-dndi.icims.com"
+  },
+  {
+    "name": "Wisevu",
+    "ats": "workable",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "wisevu"
+  },
+  {
+    "name": "Photronics, Inc.",
+    "ats": "icims",
+    "industry": "tech",
+    "source": "discovered",
+    "token": "careers-photronics.icims.com"
   }
 ]
