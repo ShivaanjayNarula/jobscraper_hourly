@@ -204,7 +204,7 @@ npm run bulk-import -- --platform workable --bar india
 
 ## Author & Connect
 
-Engineered by **Shivam Mahajan** — Systems, Backend & Distributed Systems Engineer.
+Engineered by **Shivaanjay Narula** — Systems, Backend & Distributed Systems Engineer.
 
 - **GitHub**: [@ShivaanjayNarula](https://github.com/ShivaanjayNarula)
 - **LinkedIn**: [ShivaanjayNarula](https://www.linkedin.com/in/ShivaanjayNarula/)
